@@ -1,0 +1,3 @@
+Main accent color (icons and widgets, full screen background): #4640DE
+Text for (Titles and main CTAs): #25324B
+Regular text (paragraphs and descriptions): #7C8493
