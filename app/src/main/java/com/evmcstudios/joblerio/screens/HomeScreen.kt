@@ -65,6 +65,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.evmcstudios.joblerio.data.Analytics
+import com.evmcstudios.joblerio.data.FilterState
 import com.evmcstudios.joblerio.data.Job
 import com.evmcstudios.joblerio.data.JobsApi
 import com.evmcstudios.joblerio.data.PostbackManager
@@ -129,6 +130,11 @@ class HomeScreenState(
         locationQuery = prefs.getString("location_query", "") ?: ""
         initialLoadComplete = prefs.getBoolean("initial_load_complete", false)
         hasAttemptedInitialLoad = initialLoadComplete
+        filter = FilterState.loadFromPrefs(context)
+    }
+
+    fun saveFilterToPrefs(context: android.content.Context) {
+        filter.saveToPrefs(context)
     }
 }
 

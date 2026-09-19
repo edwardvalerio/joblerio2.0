@@ -48,6 +48,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -102,6 +103,8 @@ fun MainScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var showFilterSheet by remember { mutableStateOf(false) }
+    val hasActiveFilters = !state.filter.isDefault
+    val context = LocalContext.current
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -182,11 +185,21 @@ fun MainScreen(
                                 )
                             }
                             IconButton(onClick = { showFilterSheet = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.Tune,
-                                    contentDescription = "Filter",
-                                    tint = Color.White
-                                )
+                                Box {
+                                    Icon(
+                                        imageVector = Icons.Default.Tune,
+                                        contentDescription = "Filter",
+                                        tint = Color.White
+                                    )
+                                    if (hasActiveFilters) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(10.dp)
+                                                .background(Color.Red, CircleShape)
+                                                .align(Alignment.TopEnd)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -261,6 +274,7 @@ fun MainScreen(
             onDismiss = { showFilterSheet = false },
             onApply = { newFilter ->
                 state.filter = newFilter
+                state.saveFilterToPrefs(context)
                 scope.launch {
                     state.jobs = emptyList()
                     state.currentPage = 0

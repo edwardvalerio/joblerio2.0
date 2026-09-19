@@ -1,10 +1,46 @@
 package com.evmcstudios.joblerio.data
 
+import android.content.Context
+import android.content.SharedPreferences
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+
 data class FilterState(
     val radius: Int = 25,
     val sortBy: String = "relevance",
     val categories: Set<Int> = emptySet()
-)
+) {
+    val isDefault: Boolean
+        get() = radius == 25 && sortBy == "relevance" && categories.isEmpty()
+
+    fun saveToPrefs(context: Context) {
+        getPrefs(context).edit()
+            .putInt("filter_radius", radius)
+            .putString("filter_sort", sortBy)
+            .putString("filter_categories", Gson().toJson(categories.toList()))
+            .apply()
+    }
+
+    companion object {
+        private fun getPrefs(context: Context): SharedPreferences {
+            return context.getSharedPreferences("filter_prefs", Context.MODE_PRIVATE)
+        }
+
+        fun loadFromPrefs(context: Context): FilterState {
+            val prefs = getPrefs(context)
+            val radius = prefs.getInt("filter_radius", 25)
+            val sort = prefs.getString("filter_sort", "relevance") ?: "relevance"
+            val catJson = prefs.getString("filter_categories", "[]") ?: "[]"
+            val categories = try {
+                val list: List<Int> = Gson().fromJson(catJson, object : TypeToken<List<Int>>() {}.type)
+                list.toSet()
+            } catch (e: Exception) {
+                emptySet()
+            }
+            return FilterState(radius, sort, categories)
+        }
+    }
+}
 
 object JobCategories {
     data class Category(val id: Int, val name: String)
