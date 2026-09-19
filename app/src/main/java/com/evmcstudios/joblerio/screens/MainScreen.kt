@@ -17,10 +17,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -38,12 +38,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.evmcstudios.joblerio.data.SavedJobsManager
 import com.evmcstudios.joblerio.data.UserPrefs
 import com.evmcstudios.joblerio.ui.theme.BackgroundWhite
@@ -65,7 +68,7 @@ fun MainScreen(
     onLogout: () -> Unit = {}
 ) {
     val bottomNavItems = listOf(
-        BottomNavItem("Home", Icons.Filled.Home, "home"),
+        BottomNavItem("Search", Icons.Filled.Search, "home"),
         BottomNavItem("Saved", Icons.Filled.Bookmark, "saved"),
         BottomNavItem("Profile", Icons.Filled.Person, "profile")
     )
@@ -129,10 +132,9 @@ fun MainScreen(
 fun ProfileScreen(onLogout: () -> Unit = {}) {
     val context = LocalContext.current
     val userName = remember { UserPrefs.getUserName(context) }
-    val userEmail = remember {
-        context.getSharedPreferences("user_prefs", android.content.Context.MODE_PRIVATE)
-            .getString("user_email", "") ?: ""
-    }
+    val userEmail = remember { UserPrefs.getUserEmail(context) }
+    val avatarUrl = remember { UserPrefs.getAvatarUrl(context) }
+    val isLoggedIn = remember { UserPrefs.isLoggedIn(context) }
     val savedJobsCount = remember { SavedJobsManager.getSavedJobs(context).size }
 
     Column(
@@ -170,18 +172,29 @@ fun ProfileScreen(onLogout: () -> Unit = {}) {
                     modifier = Modifier.padding(20.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .background(PrimaryBlue.copy(alpha = 0.1f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = if (userName.isNotBlank()) userName.first().uppercaseChar().toString() else "?",
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = PrimaryBlue
+                    if (avatarUrl.isNotBlank()) {
+                        AsyncImage(
+                            model = avatarUrl,
+                            contentDescription = "Avatar",
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
                         )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .background(PrimaryBlue.copy(alpha = 0.1f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (userName.isNotBlank()) userName.first().uppercaseChar().toString() else "?",
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = PrimaryBlue
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
@@ -258,7 +271,9 @@ fun ProfileScreen(onLogout: () -> Unit = {}) {
 
             Button(
                 onClick = {
-                    UserPrefs.clear(context)
+                    if (isLoggedIn) {
+                        UserPrefs.clear(context)
+                    }
                     onLogout()
                 },
                 modifier = Modifier
@@ -266,18 +281,18 @@ fun ProfileScreen(onLogout: () -> Unit = {}) {
                     .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFF6B6B)
+                    containerColor = if (isLoggedIn) Color(0xFFFF6B6B) else PrimaryBlue
                 )
             ) {
                 Icon(
-                    imageVector = Icons.Filled.ExitToApp,
+                    imageVector = if (isLoggedIn) Icons.Filled.ExitToApp else Icons.Filled.PersonAdd,
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Log Out",
+                    text = if (isLoggedIn) "Log Out" else "Log In",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White

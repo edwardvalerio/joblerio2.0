@@ -3,6 +3,7 @@ package com.evmcstudios.joblerio.screens
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,10 +18,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -55,6 +59,7 @@ fun LoginScreen(
 ) {
     val context = LocalContext.current
     val auth = remember { FirebaseAuth.getInstance() }
+    var showEmailForm by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var showValidation by remember { mutableStateOf(false) }
@@ -62,7 +67,7 @@ fun LoginScreen(
 
     val googleSignInClient = remember {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(context.getString(com.evmcstudios.joblerio.R.string.default_web_client_id))
+            .requestIdToken(context.getString(R.string.default_web_client_id))
             .requestEmail()
             .build()
         GoogleSignIn.getClient(context, gso)
@@ -81,7 +86,8 @@ fun LoginScreen(
                         if (task2.isSuccessful) {
                             val userName = account.displayName ?: ""
                             val userEmail = account.email ?: ""
-                            UserPrefs.saveUser(context, userName, userEmail)
+                            val avatarUrl = account.photoUrl?.toString() ?: ""
+                            UserPrefs.saveUser(context, userName, userEmail, avatarUrl)
                             onLoginSuccess(userName)
                         }
                         googleLoading = false
@@ -103,152 +109,191 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Top
     ) {
         Spacer(modifier = Modifier.height(80.dp))
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            androidx.compose.foundation.Image(
-                painter = painterResource(id = R.drawable.logo_white),
-                contentDescription = "Joblerio Logo",
-                modifier = Modifier.fillMaxWidth(0.4f),
-                contentScale = ContentScale.FillWidth
-            )
+
+        if (showEmailForm) {
+            IconButton(
+                onClick = {
+                    showEmailForm = false
+                    name = ""
+                    email = ""
+                    showValidation = false
+                },
+                modifier = Modifier.align(Alignment.Start)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Find your next career path",
-                fontSize = 13.sp,
-                color = Color.White.copy(alpha = 0.7f)
-            )
-        }
-        Spacer(modifier = Modifier.height(60.dp))
-
-        Button(
-            onClick = {
-                googleLoading = true
-                val signInIntent = googleSignInClient.signInIntent
-                googleSignInLauncher.launch(signInIntent)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-            enabled = !googleLoading
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_google),
-                contentDescription = "Google",
-                modifier = Modifier.size(22.dp),
-                tint = Color.Unspecified
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = if (googleLoading) "Signing in..." else "Continue with Google",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF333333)
-            )
-        }
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            HorizontalDivider(
-                modifier = Modifier.weight(1f),
-                color = Color.White.copy(alpha = 0.3f)
-            )
-            Text(
-                text = "  or  ",
-                color = Color.White.copy(alpha = 0.7f),
-                fontSize = 13.sp
-            )
-            HorizontalDivider(
-                modifier = Modifier.weight(1f),
-                color = Color.White.copy(alpha = 0.3f)
-            )
-        }
-        Spacer(modifier = Modifier.height(10.dp))
-
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text("Full Name", color = Color.White.copy(alpha = 0.7f)) },
-            placeholder = { Text("Enter your name", color = Color.White.copy(alpha = 0.5f)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
-                focusedBorderColor = Color.White,
-                unfocusedContainerColor = Color.White.copy(alpha = 0.1f),
-                focusedContainerColor = Color.White.copy(alpha = 0.15f),
-                cursorColor = Color.White,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
-            )
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email", color = Color.White.copy(alpha = 0.7f)) },
-            placeholder = { Text("Enter your email", color = Color.White.copy(alpha = 0.5f)) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
-                focusedBorderColor = Color.White,
-                unfocusedContainerColor = Color.White.copy(alpha = 0.1f),
-                focusedContainerColor = Color.White.copy(alpha = 0.15f),
-                cursorColor = Color.White,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
-            )
-        )
-
-        if (showValidation) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Please enter your name and email",
-                color = Color(0xFFFF6B6B),
-                fontSize = 13.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Button(
-            onClick = {
-                if (name.isNotBlank() && email.isNotBlank()) {
-                    UserPrefs.saveUser(context, name.trim(), email.trim())
-                    onLoginSuccess(name.trim())
-                } else {
-                    showValidation = true
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.2f))
-        ) {
-            Text(
-                text = "Sign In",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
+                text = "Sign in with Email",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
                 color = Color.White
             )
-        }
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Enter your details to continue",
+                fontSize = 14.sp,
+                color = Color.White.copy(alpha = 0.7f)
+            )
+            Spacer(modifier = Modifier.height(32.dp))
 
-        Text(
-            text = "Skip for now",
-            fontSize = 16.sp,
-            color = Color.White.copy(alpha = 0.8f),
-            modifier = Modifier
-                .clickable { onSkip() }
-                .padding(8.dp)
-        )
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Full Name", color = Color.White.copy(alpha = 0.7f)) },
+                placeholder = { Text("Enter your name", color = Color.White.copy(alpha = 0.5f)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+                    focusedBorderColor = Color.White,
+                    unfocusedContainerColor = Color.White.copy(alpha = 0.1f),
+                    focusedContainerColor = Color.White.copy(alpha = 0.15f),
+                    cursorColor = Color.White,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+            Spacer(modifier = Modifier.height(14.dp))
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email", color = Color.White.copy(alpha = 0.7f)) },
+                placeholder = { Text("Enter your email", color = Color.White.copy(alpha = 0.5f)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+                    focusedBorderColor = Color.White,
+                    unfocusedContainerColor = Color.White.copy(alpha = 0.1f),
+                    focusedContainerColor = Color.White.copy(alpha = 0.15f),
+                    cursorColor = Color.White,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+
+            if (showValidation) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Please enter your name and email",
+                    color = Color(0xFFFF6B6B),
+                    fontSize = 13.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = {
+                    if (name.isNotBlank() && email.isNotBlank()) {
+                        UserPrefs.saveUser(context, name.trim(), email.trim())
+                        onLoginSuccess(name.trim())
+                    } else {
+                        showValidation = true
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+            ) {
+                Text(
+                    text = "Sign In",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = PrimaryBlue
+                )
+            }
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo_white),
+                    contentDescription = "Joblerio Logo",
+                    modifier = Modifier.fillMaxWidth(0.35f),
+                    contentScale = ContentScale.FillWidth
+                )
+                Text(
+                    text = "Find your next career path",
+                    fontSize = 13.sp,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+            }
+            Spacer(modifier = Modifier.height(64.dp))
+
+            Button(
+                onClick = {
+                    googleLoading = true
+                    val signInIntent = googleSignInClient.signInIntent
+                    googleSignInLauncher.launch(signInIntent)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                enabled = !googleLoading
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_google),
+                    contentDescription = "Google",
+                    modifier = Modifier.size(22.dp),
+                    tint = Color.Unspecified
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = if (googleLoading) "Signing in..." else "Continue with Google",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF333333)
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = { showEmailForm = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.2f))
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_email),
+                    contentDescription = "Email",
+                    modifier = Modifier.size(22.dp),
+                    tint = Color.Unspecified
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "Continue with Email",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text(
+                text = "Skip for now",
+                fontSize = 16.sp,
+                color = Color.White.copy(alpha = 0.8f),
+                modifier = Modifier
+                    .clickable { onSkip() }
+                    .padding(8.dp)
+            )
+        }
     }
 }
