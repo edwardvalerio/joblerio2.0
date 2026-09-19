@@ -113,6 +113,7 @@ fun rememberHomeScreenState(): HomeScreenState {
 @Composable
 fun HomeScreen(
     state: HomeScreenState,
+    userName: String = "",
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
     onJobClick: (String, String, String, String, String, String, String) -> Unit = { _, _, _, _, _, _, _ -> }
 ) {
@@ -186,7 +187,7 @@ fun HomeScreen(
     }
 
     LaunchedEffect(listState.layoutInfo) {
-        if (!state.isInitialLoadDone || state.isLoading || state.isLoadingMore || !state.hasMore) return@LaunchedEffect
+        if (!state.isInitialLoadDone || state.isLoading || state.isLoadingMore || !state.hasMore || state.jobs.isEmpty()) return@LaunchedEffect
         val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
         val totalItems = listState.layoutInfo.totalItemsCount
         if (lastVisibleItem >= totalItems - 3) {
@@ -213,12 +214,12 @@ fun HomeScreen(
             ) {
                 Column {
                     Text(
-                        text = "Welcome Peter",
+                        text = if (userName.isNotBlank()) "Welcome, $userName" else "Welcome",
                         fontSize = 16.sp,
                         color = Color.White.copy(alpha = 0.8f)
                     )
                     Text(
-                        text = "Let's find job",
+                        text = "Start your search:",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White

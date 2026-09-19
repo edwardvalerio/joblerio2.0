@@ -5,11 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.evmcstudios.joblerio.data.UserPrefs
 import com.evmcstudios.joblerio.screens.LoginScreen
 import com.evmcstudios.joblerio.screens.MainScreen
 import com.evmcstudios.joblerio.screens.SplashScreen
@@ -32,21 +34,30 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun JoblerioApp() {
+    val context = LocalContext.current
     val navController = rememberNavController()
+    val userName = UserPrefs.getUserName(context)
+    val startDest = if (UserPrefs.isLoggedIn(context)) "main" else "splash"
 
-    NavHost(navController = navController, startDestination = "splash") {
+    NavHost(navController = navController, startDestination = startDest) {
         composable("splash") {
             SplashScreen(
                 onSplashFinished = {
-                    navController.navigate("login") {
-                        popUpTo("splash") { inclusive = true }
+                    if (UserPrefs.isLoggedIn(context)) {
+                        navController.navigate("main") {
+                            popUpTo("splash") { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate("login") {
+                            popUpTo("splash") { inclusive = true }
+                        }
                     }
                 }
             )
         }
         composable("login") {
             LoginScreen(
-                onLoginSuccess = {
+                onLoginSuccess = { name ->
                     navController.navigate("main") {
                         popUpTo("login") { inclusive = true }
                     }
@@ -59,11 +70,18 @@ fun JoblerioApp() {
             )
         }
         composable("main") {
+            val name = UserPrefs.getUserName(context)
             MainScreen(
+                userName = name,
                 onJobClick = { url, jobTitle, company, city, state, date, snippet ->
                     val args = listOf(url, jobTitle, company, city, state, date, snippet)
                         .joinToString("&") { URLEncoder.encode(it, "UTF-8") }
                     navController.navigate("webview/$args")
+                },
+                onLogout = {
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }
