@@ -1,0 +1,23 @@
+Create a job search app,
+
+
+1 loading full page with logo and blue background (see color scheme for colors) 2-3 seconds - then to login page. 
+1 login page have a simple email login on first page or skip to search jobs -> main page  - if user already logged in > skip to main
+main page will have a search and locations field, with a search button.
+main page will have some preloaded listings.
+
+API Jobs feel is inside the jobsapi.txt file - please implement this for now but we will change it later. 
+
+
+see color scheme for style direction
+see models folder for images to follow the structure (NOT COLOR) just general layout inspiration.
+it should have a bottom navigation with icons
+
+
+Additional features for later ( don't code now )
+
+Profile - has log out, users name and email and general info
+Resume builder - be able to build a resume, be saved and can exported as PDF for distribution
+Alerts - set up alerts daily, weekly, when new jobs. 
+Jobs Applied - able to mark if applied to jobs
+Favorites - able to save favorites.

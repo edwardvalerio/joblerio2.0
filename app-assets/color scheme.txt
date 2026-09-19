@@ -1,3 +1,4 @@
-Main accent color (icons and widgets, full screen background): #4640DE
-Text for (Titles and main CTAs): #25324B
+Main accent color (icons and widgets, full screen background, buttons background with white text): #4640DE
+Text for (Titles and main CTAs): #25324Bd
 Regular text (paragraphs and descriptions): #7C8493
+font family should be professional modern, easy to read, slightly rounded. 

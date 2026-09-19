@@ -1,0 +1,92 @@
+Syndicated Job Feed Web API
+Call the Search/Find API from your server, render the returned jobs on your site, and get credit when job seekers click through to the job posting.
+
+How it works
+Call the Search/Find API to generate search result for the publisher's site.
+Get the API response from our system: we will deliver (n) number of jobs (NOTE: n is configurable). The publisher needs to parse the response to render the jobs on their site. The publisher needs to use the url provided in the response.
+When job seeker clicks on the url provided for a specific job, the job seeker is taken to the job posting. The publisher gets credit for the click.
+Integration steps
+Search/Find API request from partner's server to Upward.net API server.
+http://api.l5srv.net/job_search/api/web/find_jobs.srv?CID=<xxxx>&CHID=<yyyy>&format=XML2&q=Sales&l=95054&r=25&s=relevance&a=2014-09-30&start=1&limit=8&highlight=off&userip=25.158.22.121&useragent=Mozilla%2F5.0
+
+CID will be assigned by Account Manager
+CHID is a Publisher Channel ID (max of 200 unique) – as defined by publisher
+Publisher receives a response from Upward.net API server with the job details(see appendix for a sample response)
+Optional per-contract fields, enabled by your Account Manager: salary (pay text for the job, e.g. "$13.95 to $48.71/hr (est.)") and jobTags (the job's tags, such as remote or 401k). A field is omitted when the job has no data for it.
+On the publisher's site job results page, use the URL, title, company, etc. for each job from the response (in step 1), and render each job appropriately for the user. The links on the page should have the touch/mousedown event code added as follows:
+<a href="https://api.l5srv.net/job_search/api/web/get_job.srv?token=X456..." onmousedown="l5_trk(this)">Cashier</a>
+
+For mobile devices or tablets, the onmousedown event handler doesn’t work. So you need to replace it with ontouchstart. So on a tablet, the same link would look like:
+<a href="https://api.l5srv.net/job_search/api/web/get_job.srv?token=X456..." ontouchstart="l5_trk(this)">Cashier</a>
+
+The l5_trk javaScript function is provided by Upward.net and it should be included in the publishers job results page using the following code:
+<script src="https://clk.l5srv.net/js/api/trk.js" type="text/javascript"></script>
+This code should be added somewhere on the page, ideally near the top.
+Users after clicking on any of the job links will be directed to the job posting page.
+Parameters
+Key	Description	Values	Note	Required
+CID	Publisher Contract ID	<xxxx>	Assigned to each Publisher	Yes
+q	Search phrase	truck driver	This is searching query.	Yes
+l	Search Location	
+60007
+San Jose, CA
+Zip or City/State	Yes
+userip	User IP	Valid IP address	This should be teh consumer's IP address	Yes
+useragent	User Agent	Values as presented by browser		Yes
+Advanced API Functions
+Key	Description	Values	Note	Required
+r	Radius in miles	10, 15, 25, 50	Distance from search location. Default 25 miles	No
+s	Sorting criteria	relevance/age	Default is relevance	No
+start	Start results at this result number	0-9999	Start results at this result number, beginning with 0. Default is 0.	No
+limit	Size of the page	1-25	Default is 10	No
+highlight	Used to turn on highlighting for the searched words	on/off	Default is off	No
+CHID	Channel ID	10 alphanumeric character	Extra tracking dimension. Used to track performance per site or page to whatever the publisher chooses(MAX of 25 per publisher)	No
+format	Format of the response	XML2/JSON2	Default is XML	No
+cat	Target a specific category	cat=2&cat=3&cat=7	See Occupation Category table	No
+c	Target a specific company	c=walmart&c=amazon		No
+desc	Job Descriptions for jobs	e = stripped html, y = full description, n = off	Default is off	No
+e	"Enhanced" searches leverage the millions of daily searches across the Upward network	y = on, n= off	Default is on	No
+email	Email address for improving results based on user history	URL-encoded email address	Used to improve search results based on the user's prior click history. Must be URL-encoded (e.g., user%40example.com)	No
+Occupation Category Table
+Occupation Category ID	Category
+1	Accounting & Finance
+2	Administrative & Office
+3	Advertising & Marketing
+4	Animal Care
+5	Art, Fashion & Design
+6	Business Operations
+7	Cleaning & Facilities
+8	Computer & IT
+9	Construction
+10	Customer Service
+11	Education
+12	Energy, Mining & Natural Resources
+13	Entertainment & Travel
+14	Farming & Outdoor
+35	Gig
+15	Government
+16	Healthcare
+17	Hospitality
+18	Human Resources
+19	Installation, Maintenance & Repair
+20	Legal
+21	Manufacturing & Production
+22	Media, Communications & Writing
+23	Operators
+24	Personal Care & Services
+25	Protective Services & Security
+26	Real Estate
+27	Restaurant & Food Services
+28	Retail
+29	Sales
+30	Science
+31	Social Services & Nonprofit
+32	Sports, Fitness & Recreation
+33	Transportation & Logistics
+34	Warehouse
+
+
+const CID = '4183';
+const CHID = 'app';
+
+ 
