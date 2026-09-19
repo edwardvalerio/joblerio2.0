@@ -38,6 +38,13 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -47,6 +54,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -69,6 +78,9 @@ import androidx.compose.ui.unit.sp
 import com.evmcstudios.joblerio.data.Analytics
 import com.evmcstudios.joblerio.data.Job
 import com.evmcstudios.joblerio.data.JobsApi
+import com.evmcstudios.joblerio.data.PostbackManager
+import com.evmcstudios.joblerio.data.ReferrerManager
+import com.evmcstudios.joblerio.data.RemoteConfigManager
 import com.evmcstudios.joblerio.data.SavedJobsManager
 import com.evmcstudios.joblerio.ui.theme.BackgroundWhite
 import com.evmcstudios.joblerio.ui.theme.CardWhite
@@ -111,19 +123,42 @@ class HomeScreenState(
         internal set
     var scrollOffset by mutableIntStateOf(0)
         internal set
+
+    fun saveToPrefs(context: android.content.Context) {
+        context.getSharedPreferences("home_state", android.content.Context.MODE_PRIVATE).edit()
+            .putString("search_query", searchQuery)
+            .putString("location_query", locationQuery)
+            .putBoolean("initial_load_complete", initialLoadComplete)
+            .apply()
+    }
+
+    fun loadFromPrefs(context: android.content.Context) {
+        val prefs = context.getSharedPreferences("home_state", android.content.Context.MODE_PRIVATE)
+        searchQuery = prefs.getString("search_query", "") ?: ""
+        locationQuery = prefs.getString("location_query", "") ?: ""
+        initialLoadComplete = prefs.getBoolean("initial_load_complete", false)
+        hasAttemptedInitialLoad = initialLoadComplete
+    }
 }
 
 @Composable
 fun rememberHomeScreenState(): HomeScreenState {
-    return remember { HomeScreenState() }
+    val context = LocalContext.current
+    return remember {
+        HomeScreenState().also {
+            it.loadFromPrefs(context)
+        }
+    }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     state: HomeScreenState,
     userName: String = "",
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
-    onJobClick: (String, String, String, String, String, String, String) -> Unit = { _, _, _, _, _, _, _ -> }
+    onJobClick: (String, String, String, String, String, String, String) -> Unit = { _, _, _, _, _, _, _ -> },
+    onOpenLink: (String, String) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -175,20 +210,14 @@ fun HomeScreen(
         }
     }
 
+    var permissionResult by remember { mutableStateOf<Boolean?>(null) }
+
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val granted = permissions.values.any { it }
-        Log.d("HomeScreen", "Location permission granted: $granted")
-        if (granted) {
-            scope.launch {
-                val detectedLocation = JobsApi.detectLocation(context)
-                Log.d("HomeScreen", "Detected location after permission: '$detectedLocation'")
-                if (detectedLocation.isNotBlank()) {
-                    state.locationQuery = detectedLocation
-                }
-            }
-        }
+        Log.d("HomeScreen", "Location permission result: granted=$granted")
+        permissionResult = granted
     }
 
     DisposableEffect(Unit) {
@@ -207,8 +236,19 @@ fun HomeScreen(
         }
     }
 
+    fun resolveKeyword(referrerKeyword: String, countryCode: String) {
+        val referrerCountry = ReferrerManager.getCountry(context)
+        val effectiveCountry = countryCode.ifBlank { referrerCountry }
+        val remoteKeyword = if (effectiveCountry.isNotBlank()) RemoteConfigManager.getKeywordForCountry(effectiveCountry) else ""
+        val searchKeyword = referrerKeyword.ifBlank { remoteKeyword }.ifBlank { "Jobs" }
+        Log.d("HomeScreen", "Keyword: referrer='$referrerKeyword', country='$effectiveCountry', remote='$remoteKeyword', final='$searchKeyword'")
+        if (state.searchQuery.isBlank()) {
+            state.searchQuery = searchKeyword
+        }
+    }
+
     LaunchedEffect(Unit) {
-        Log.d("HomeScreen", "LaunchedEffect(Unit) triggered, initialLoadComplete=${state.initialLoadComplete}, hasAttempted=${state.hasAttemptedInitialLoad}")
+        Log.d("HomeScreen", "Initial load started")
         if (!state.initialLoadComplete && !state.hasAttemptedInitialLoad) {
             state.hasAttemptedInitialLoad = true
 
@@ -220,22 +260,54 @@ fun HomeScreen(
             ) == PackageManager.PERMISSION_GRANTED
 
             if (hasPermission) {
-                Log.d("HomeScreen", "Detecting location...")
-                val detectedLocation = JobsApi.detectLocation(context)
-                Log.d("HomeScreen", "Detected location: '$detectedLocation'")
-                if (detectedLocation.isNotBlank() && state.locationQuery.isBlank()) {
-                    state.locationQuery = detectedLocation
+                Log.d("HomeScreen", "Permission already granted, detecting location...")
+                val locationResult = JobsApi.detectLocation(context)
+                if (locationResult != null) {
+                    Log.d("HomeScreen", "Location: '${locationResult.location}', country: '${locationResult.countryCode}'")
+                    if (locationResult.location.isNotBlank()) state.locationQuery = locationResult.location
+                    resolveKeyword("", locationResult.countryCode)
+                } else {
+                    resolveKeyword("", "")
                 }
                 loadJobs(state.searchQuery.ifBlank { "jobs" }, state.locationQuery.ifBlank { "95054" })
+                state.initialLoadComplete = true
+                state.saveToPrefs(context)
             } else {
-                Log.d("HomeScreen", "No permission, loading with default location")
-                loadJobs(state.searchQuery.ifBlank { "jobs" }, "95054")
+                Log.d("HomeScreen", "No permission, requesting...")
+                permissionResult = null
                 locationPermissionLauncher.launch(
                     arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
                 )
             }
-            state.initialLoadComplete = true
+        } else if (state.initialLoadComplete && state.jobs.isEmpty()) {
+            Log.d("HomeScreen", "Restored state, loading saved queries")
+            loadJobs(state.searchQuery.ifBlank { "jobs" }, state.locationQuery.ifBlank { "95054" })
         }
+    }
+
+    LaunchedEffect(permissionResult) {
+        if (state.initialLoadComplete) return@LaunchedEffect
+        if (permissionResult == null) return@LaunchedEffect
+
+        Log.d("HomeScreen", "Permission result received: $permissionResult")
+
+        if (permissionResult == true) {
+            val locationResult = JobsApi.detectLocation(context)
+            if (locationResult != null) {
+                Log.d("HomeScreen", "Location after permission: '${locationResult.location}', country: '${locationResult.countryCode}'")
+                if (locationResult.location.isNotBlank()) state.locationQuery = locationResult.location
+                resolveKeyword("", locationResult.countryCode)
+            } else {
+                resolveKeyword("", "")
+            }
+        } else {
+            Log.d("HomeScreen", "Permission denied, using defaults")
+            resolveKeyword("", "")
+        }
+
+        loadJobs(state.searchQuery.ifBlank { "jobs" }, state.locationQuery.ifBlank { "95054" })
+        state.initialLoadComplete = true
+        state.saveToPrefs(context)
     }
 
     LaunchedEffect(listState.layoutInfo) {
@@ -248,6 +320,9 @@ fun HomeScreen(
             loadJobs(state.searchQuery.ifBlank { "jobs" }, state.locationQuery.ifBlank { "95054" }, loadMore = true)
         }
     }
+
+    var showMenuSheet by remember { mutableStateOf(false) }
+    val menuSheetState = rememberModalBottomSheetState()
 
     Column(
         modifier = Modifier
@@ -265,7 +340,7 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { }) {
+                IconButton(onClick = { showMenuSheet = true }) {
                     Icon(
                         imageVector = Icons.Default.Menu,
                         contentDescription = "Menu",
@@ -550,7 +625,13 @@ fun HomeScreen(
                 JobCard(
                     job = job,
                     context = context,
-                    onClick = { onJobClick(job.url, job.title, job.company, job.city, job.state, job.date, job.snippet) }
+                    onClick = {
+                        PostbackManager.incrementJobClickCount(context)
+                        scope.launch {
+                            PostbackManager.checkAndFirePostback(context)
+                        }
+                        onJobClick(job.url, job.title, job.company, job.city, job.state, job.date, job.snippet)
+                    }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -573,6 +654,55 @@ fun HomeScreen(
 
             item {
                 Spacer(modifier = Modifier.height(bottomPadding + 16.dp))
+            }
+        }
+    }
+
+    if (showMenuSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showMenuSheet = false },
+            sheetState = menuSheetState
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+            ) {
+                Text(
+                    text = "Menu",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TitleDark
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Text(
+                    text = "Privacy Policy",
+                    fontSize = 16.sp,
+                    color = PrimaryBlue,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            showMenuSheet = false
+                            onOpenLink("https://joblerio.evmcstudios.com/privacy.html", "Privacy Policy")
+                        }
+                        .padding(vertical = 14.dp)
+                )
+
+                Text(
+                    text = "Terms & Conditions",
+                    fontSize = 16.sp,
+                    color = PrimaryBlue,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            showMenuSheet = false
+                            onOpenLink("https://joblerio.evmcstudios.com/terms.html", "Terms & Conditions")
+                        }
+                        .padding(vertical = 14.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }

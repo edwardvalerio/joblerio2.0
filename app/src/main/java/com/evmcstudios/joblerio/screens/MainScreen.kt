@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.ExitToApp
@@ -25,6 +27,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -48,6 +51,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.evmcstudios.joblerio.data.Analytics
+import com.evmcstudios.joblerio.data.PostbackManager
+import com.evmcstudios.joblerio.data.ReferrerManager
 import com.evmcstudios.joblerio.data.SavedJobsManager
 import com.evmcstudios.joblerio.data.UserPrefs
 import com.evmcstudios.joblerio.ui.theme.BackgroundWhite
@@ -67,6 +72,7 @@ fun MainScreen(
     userName: String = "",
     homeScreenState: HomeScreenState = rememberHomeScreenState(),
     onJobClick: (String, String, String, String, String, String, String) -> Unit,
+    onOpenLink: (String, String) -> Unit = { _, _ -> },
     onLogout: () -> Unit = {}
 ) {
     val bottomNavItems = listOf(
@@ -125,25 +131,37 @@ fun MainScreen(
                 state = state,
                 userName = userName,
                 bottomPadding = innerPadding.calculateBottomPadding(),
-                onJobClick = onJobClick
+                onJobClick = onJobClick,
+                onOpenLink = onOpenLink
             )
             1 -> SavedScreen(
                 bottomPadding = innerPadding.calculateBottomPadding(),
                 onJobClick = onJobClick
             )
-            2 -> ProfileScreen(onLogout = onLogout)
+            2 -> ProfileScreen(
+                bottomPadding = innerPadding.calculateBottomPadding(),
+                onLogout = onLogout
+            )
         }
     }
 }
 
 @Composable
-fun ProfileScreen(onLogout: () -> Unit = {}) {
+fun ProfileScreen(bottomPadding: androidx.compose.ui.unit.Dp = 0.dp, onLogout: () -> Unit = {}) {
     val context = LocalContext.current
     val userName = remember { UserPrefs.getUserName(context) }
     val userEmail = remember { UserPrefs.getUserEmail(context) }
     val avatarUrl = remember { UserPrefs.getAvatarUrl(context) }
     val isLoggedIn = remember { UserPrefs.isLoggedIn(context) }
     val savedJobsCount = remember { SavedJobsManager.getSavedJobs(context).size }
+
+    val clickId = remember { ReferrerManager.getClickId(context) }
+    val country = remember { ReferrerManager.getCountry(context) }
+    val campaign = remember { ReferrerManager.getCampaign(context) }
+    val keyword = remember { ReferrerManager.getKeyword(context) }
+    val rawReferrer = remember { ReferrerManager.getRawReferrer(context) }
+    val postbackFired = remember { PostbackManager.isPostbackFired(context) }
+    val jobClickCount = remember { PostbackManager.getJobClickCount(context) }
 
     Column(
         modifier = Modifier
@@ -168,7 +186,9 @@ fun ProfileScreen(onLogout: () -> Unit = {}) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(24.dp)
+                .padding(bottom = bottomPadding)
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -275,6 +295,35 @@ fun ProfileScreen(onLogout: () -> Unit = {}) {
                 }
             }
 
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = CardWhite),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = "Referrer Info",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TitleDark
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    ReferrerRow("Click ID", clickId.ifBlank { "N/A" })
+                    ReferrerRow("Country", country.ifBlank { "N/A" })
+                    ReferrerRow("Campaign", campaign.ifBlank { "N/A" })
+                    ReferrerRow("Keyword", keyword.ifBlank { "N/A" })
+                    Spacer(modifier = Modifier.height(8.dp))
+                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ReferrerRow("Postback Fired", if (postbackFired) "Yes" else "No")
+                    ReferrerRow("Job Clicks", jobClickCount.toString())
+                    ReferrerRow("Raw Referrer", rawReferrer.ifBlank { "N/A" })
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
@@ -308,5 +357,27 @@ fun ProfileScreen(onLogout: () -> Unit = {}) {
             }
             Spacer(modifier = Modifier.height(16.dp))
         }
+    }
+}
+
+@Composable
+fun ReferrerRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            fontSize = 13.sp,
+            color = TextGray
+        )
+        Text(
+            text = value,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = TitleDark
+        )
     }
 }

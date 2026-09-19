@@ -26,6 +26,11 @@ data class JobSearchResult(
     val totalResults: Int
 )
 
+data class LocationResult(
+    val location: String,
+    val countryCode: String
+)
+
 object JobsApi {
 
     private const val BASE_URL = "https://api.l5srv.net/job_search/api/web/find_jobs.srv"
@@ -35,7 +40,7 @@ object JobsApi {
     private const val TEST_MODE = true
     private const val TEST_URL = "https://evmcstudios.com/"
 
-    private val client = OkHttpClient.Builder()
+    internal val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
         .build()
@@ -63,7 +68,7 @@ object JobsApi {
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
     }
 
-    suspend fun detectLocation(context: Context): String = withContext(Dispatchers.IO) {
+    suspend fun detectLocation(context: Context): LocationResult? = withContext(Dispatchers.IO) {
         try {
             val hasPermission = ContextCompat.checkSelfPermission(
                 context, Manifest.permission.ACCESS_FINE_LOCATION
@@ -74,7 +79,7 @@ object JobsApi {
 
             if (!hasPermission) {
                 Log.d("JobsApi", "No location permission")
-                return@withContext ""
+                return@withContext null
             }
 
             val fusedClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
@@ -89,14 +94,15 @@ object JobsApi {
                     if (address != null) {
                         val city = address.locality ?: address.subAdminArea ?: ""
                         val state = address.adminArea ?: ""
+                        val countryCode = address.countryCode ?: ""
                         val result = when {
                             city.isNotBlank() && state.isNotBlank() -> "$city, $state"
                             city.isNotBlank() -> city
                             state.isNotBlank() -> state
                             else -> ""
                         }
-                        Log.d("JobsApi", "Geocoded location: $result")
-                        return@withContext result
+                        Log.d("JobsApi", "Geocoded location: $result, country: $countryCode")
+                        return@withContext LocationResult(result, countryCode)
                     }
                 } else {
                     @Suppress("DEPRECATION")
@@ -105,22 +111,23 @@ object JobsApi {
                     if (address != null) {
                         val city = address.locality ?: address.subAdminArea ?: ""
                         val state = address.adminArea ?: ""
+                        val countryCode = address.countryCode ?: ""
                         val result = when {
                             city.isNotBlank() && state.isNotBlank() -> "$city, $state"
                             city.isNotBlank() -> city
                             state.isNotBlank() -> state
                             else -> ""
                         }
-                        Log.d("JobsApi", "Geocoded location: $result")
-                        return@withContext result
+                        Log.d("JobsApi", "Geocoded location: $result, country: $countryCode")
+                        return@withContext LocationResult(result, countryCode)
                     }
                 }
             }
             Log.d("JobsApi", "No location obtained")
-            ""
+            null
         } catch (e: Exception) {
             Log.e("JobsApi", "Location detection failed: ${e.message}")
-            ""
+            null
         }
     }
 

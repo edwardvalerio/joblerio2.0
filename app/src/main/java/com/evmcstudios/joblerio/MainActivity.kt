@@ -1,25 +1,32 @@
 package com.evmcstudios.joblerio
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.evmcstudios.joblerio.data.Analytics
+import com.evmcstudios.joblerio.data.PostbackManager
+import com.evmcstudios.joblerio.data.ReferrerManager
+import com.evmcstudios.joblerio.data.RemoteConfigManager
 import com.evmcstudios.joblerio.data.UserPrefs
 import com.evmcstudios.joblerio.screens.LoginScreen
 import com.evmcstudios.joblerio.screens.MainScreen
+import com.evmcstudios.joblerio.screens.SimpleWebViewScreen
 import com.evmcstudios.joblerio.screens.SplashScreen
 import com.evmcstudios.joblerio.screens.WebViewScreen
 import com.evmcstudios.joblerio.screens.rememberHomeScreenState
 import com.evmcstudios.joblerio.ui.theme.JoblerioTheme
+import kotlinx.coroutines.launch
 import java.net.URLDecoder
 import java.net.URLEncoder
 
@@ -28,6 +35,23 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         Analytics.init()
+
+        lifecycleScope.launch {
+            try {
+                RemoteConfigManager.init()
+                Log.d("MainActivity", "Remote config initialized")
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Remote config init failed: ${e.message}")
+            }
+            try {
+                ReferrerManager.captureReferrer(this@MainActivity)
+                PostbackManager.checkAndFirePostback(this@MainActivity)
+                Log.d("MainActivity", "Referrer captured and postback checked")
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Referrer/postback failed: ${e.message}")
+            }
+        }
+
         setContent {
             JoblerioTheme {
                 JoblerioApp()
@@ -90,6 +114,11 @@ fun JoblerioApp() {
                         .joinToString("&") { URLEncoder.encode(it, "UTF-8") }
                     navController.navigate("webview/$args")
                 },
+                onOpenLink = { url, title ->
+                    val encodedUrl = URLEncoder.encode(url, "UTF-8")
+                    val encodedTitle = URLEncoder.encode(title, "UTF-8")
+                    navController.navigate("simple_webview/$encodedUrl/$encodedTitle")
+                },
                 onLogout = {
                     Analytics.trackLogout()
                     navController.navigate("login") {
@@ -124,6 +153,21 @@ fun JoblerioApp() {
                 jobState = state,
                 jobDate = date,
                 jobSnippet = snippet,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = "simple_webview/{url}/{title}",
+            arguments = listOf(
+                navArgument("url") { type = NavType.StringType },
+                navArgument("title") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val url = URLDecoder.decode(backStackEntry.arguments?.getString("url") ?: "", "UTF-8")
+            val title = URLDecoder.decode(backStackEntry.arguments?.getString("title") ?: "", "UTF-8")
+            SimpleWebViewScreen(
+                url = url,
+                title = title,
                 onBack = { navController.popBackStack() }
             )
         }
