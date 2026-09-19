@@ -115,6 +115,7 @@ class HomeScreenState(
         internal set
     var filter by mutableStateOf(FilterState())
         internal set
+    var lastSearchedQuery by mutableStateOf("")
 
     fun saveToPrefs(context: android.content.Context) {
         context.getSharedPreferences("home_state", android.content.Context.MODE_PRIVATE).edit()
@@ -396,6 +397,11 @@ fun HomeScreen(
                     TextButton(
                         onClick = {
                             Analytics.trackSearch(state.searchQuery, state.locationQuery)
+                            if (state.searchQuery != state.lastSearchedQuery) {
+                                state.filter = FilterState()
+                                state.filter.saveToPrefs(context)
+                                state.lastSearchedQuery = state.searchQuery
+                            }
                             loadJobs(state.searchQuery, state.locationQuery)
                             scope.launch {
                                 listState.animateScrollToItem(0)
@@ -462,6 +468,11 @@ fun HomeScreen(
                     IconButton(
                         onClick = {
                             Analytics.trackSearch(state.searchQuery, state.locationQuery)
+                            if (state.searchQuery != state.lastSearchedQuery) {
+                                state.filter = FilterState()
+                                state.filter.saveToPrefs(context)
+                                state.lastSearchedQuery = state.searchQuery
+                            }
                             loadJobs(state.searchQuery, state.locationQuery)
                             scope.launch {
                                 listState.animateScrollToItem(0)
