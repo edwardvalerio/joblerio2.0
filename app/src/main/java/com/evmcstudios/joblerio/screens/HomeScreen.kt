@@ -170,42 +170,47 @@ fun HomeScreen(
     fun loadJobs(query: String, location: String, loadMore: Boolean = false) {
         Log.d("HomeScreen", "loadJobs called: query=$query, location=$location, loadMore=$loadMore, jobs=${state.jobs.size}, isLoading=${state.isLoading}")
         scope.launch {
-            if (loadMore) {
-                state.isLoadingMore = true
-            } else {
-                state.isLoading = true
-                state.currentPage = 0
-                state.hasMore = true
-                state.jobs = emptyList()
-                state.isInitialLoadDone = false
-            }
-            state.errorMessage = null
-
-            val pageToLoad = if (loadMore) state.currentPage + 1 else 0
-            val result = JobsApi.searchJobs(
-                query = query.ifBlank { "jobs" },
-                location = location.ifBlank { "95054" },
-                start = pageToLoad * 10,
-                limit = 10
-            )
-            result.onSuccess { searchResult ->
+            try {
                 if (loadMore) {
-                    state.jobs = state.jobs + searchResult.jobs
+                    state.isLoadingMore = true
                 } else {
-                    state.jobs = searchResult.jobs
+                    state.isLoading = true
+                    state.currentPage = 0
+                    state.hasMore = true
+                    state.jobs = emptyList()
+                    state.isInitialLoadDone = false
                 }
-                state.totalResults = searchResult.totalResults
-                state.currentPage = pageToLoad
-                state.hasMore = state.jobs.size < searchResult.totalResults
-            }.onFailure { e ->
-                state.errorMessage = e.message ?: "Failed to load jobs"
-            }
-            state.isLoading = false
-            state.isInitialLoadDone = true
-            Log.d("HomeScreen", "loadJobs finished: jobs=${state.jobs.size}, isInitialLoadDone=${state.isInitialLoadDone}")
-            if (loadMore) {
-                delay(500)
+                state.errorMessage = null
+
+                val pageToLoad = if (loadMore) state.currentPage + 1 else 0
+                val result = JobsApi.searchJobs(
+                    query = query.ifBlank { "jobs" },
+                    location = location.ifBlank { "95054" },
+                    start = pageToLoad * 10,
+                    limit = 10
+                )
+                result.onSuccess { searchResult ->
+                    if (loadMore) {
+                        state.jobs = state.jobs + searchResult.jobs
+                    } else {
+                        state.jobs = searchResult.jobs
+                    }
+                    state.totalResults = searchResult.totalResults
+                    state.currentPage = pageToLoad
+                    state.hasMore = state.jobs.size < searchResult.totalResults
+                }.onFailure { e ->
+                    state.errorMessage = e.message ?: "Failed to load jobs"
+                }
+                state.isLoading = false
+                state.isInitialLoadDone = true
+                Log.d("HomeScreen", "loadJobs finished: jobs=${state.jobs.size}, isInitialLoadDone=${state.isInitialLoadDone}")
+                if (loadMore) {
+                    delay(500)
+                }
+            } finally {
+                state.isLoading = false
                 state.isLoadingMore = false
+                Log.d("HomeScreen", "loadJobs finally: isLoading=${state.isLoading}, isLoadingMore=${state.isLoadingMore}")
             }
         }
     }
