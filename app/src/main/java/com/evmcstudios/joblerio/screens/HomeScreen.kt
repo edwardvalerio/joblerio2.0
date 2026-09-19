@@ -145,6 +145,7 @@ fun rememberHomeScreenState(): HomeScreenState {
 fun HomeScreen(
     state: HomeScreenState,
     userName: String = "",
+    topPadding: androidx.compose.ui.unit.Dp = 0.dp,
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
     onJobClick: (String, String, String, String, String, String, String) -> Unit = { _, _, _, _, _, _, _ -> },
     onOpenLink: (String, String) -> Unit = { _, _ -> }
@@ -319,6 +320,7 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundWhite)
+            .padding(top = topPadding)
     ) {
         AnimatedVisibility(
             visible = !isSearchCollapsed,
@@ -603,55 +605,6 @@ fun HomeScreen(
 
             item {
                 Spacer(modifier = Modifier.height(bottomPadding + 16.dp))
-            }
-        }
-    }
-
-    if (showMenuSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showMenuSheet = false },
-            sheetState = menuSheetState
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
-            ) {
-                Text(
-                    text = "Menu",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TitleDark
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Text(
-                    text = "Privacy Policy",
-                    fontSize = 16.sp,
-                    color = PrimaryBlue,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            showMenuSheet = false
-                            onOpenLink("https://joblerio.evmcstudios.com/privacy.html", "Privacy Policy")
-                        }
-                        .padding(vertical = 14.dp)
-                )
-
-                Text(
-                    text = "Terms & Conditions",
-                    fontSize = 16.sp,
-                    color = PrimaryBlue,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            showMenuSheet = false
-                            onOpenLink("https://joblerio.evmcstudios.com/terms.html", "Terms & Conditions")
-                        }
-                        .padding(vertical = 14.dp)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }

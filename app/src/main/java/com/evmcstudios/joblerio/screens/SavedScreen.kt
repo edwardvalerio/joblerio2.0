@@ -51,6 +51,7 @@ import com.evmcstudios.joblerio.ui.theme.TitleDark
 
 @Composable
 fun SavedScreen(
+    topPadding: androidx.compose.ui.unit.Dp = 0.dp,
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
     onJobClick: (String, String, String, String, String, String, String) -> Unit = { _, _, _, _, _, _, _ -> }
 ) {
@@ -60,23 +61,9 @@ fun SavedScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(top = topPadding)
             .background(BackgroundWhite)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(PrimaryBlue)
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 20.dp)
-        ) {
-            Text(
-                text = "Saved Jobs",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = androidx.compose.ui.graphics.Color.White
-            )
-        }
-
         if (savedJobs.isEmpty()) {
             Box(
                 modifier = Modifier

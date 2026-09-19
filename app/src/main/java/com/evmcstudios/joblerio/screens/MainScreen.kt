@@ -232,28 +232,31 @@ fun MainScreen(
             }
         ) { innerPadding ->
             when (selectedTabIndex) {
-                0 -> HomeScreen(
-                    state = state,
-                    userName = userName,
-                    bottomPadding = innerPadding.calculateBottomPadding(),
-                    onJobClick = onJobClick,
-                    onOpenLink = onOpenLink
-                )
-                1 -> SavedScreen(
-                    bottomPadding = innerPadding.calculateBottomPadding(),
-                    onJobClick = onJobClick
-                )
-                2 -> ProfileScreen(
-                    bottomPadding = innerPadding.calculateBottomPadding(),
-                    onLogout = onLogout
-                )
+            0 -> HomeScreen(
+                state = state,
+                userName = userName,
+                topPadding = innerPadding.calculateTopPadding(),
+                bottomPadding = innerPadding.calculateBottomPadding(),
+                onJobClick = onJobClick,
+                onOpenLink = onOpenLink
+            )
+            1 -> SavedScreen(
+                topPadding = innerPadding.calculateTopPadding(),
+                bottomPadding = innerPadding.calculateBottomPadding(),
+                onJobClick = onJobClick
+            )
+            2 -> ProfileScreen(
+                topPadding = innerPadding.calculateTopPadding(),
+                bottomPadding = innerPadding.calculateBottomPadding(),
+                onLogout = onLogout
+            )
             }
         }
     }
 }
 
 @Composable
-fun ProfileScreen(bottomPadding: androidx.compose.ui.unit.Dp = 0.dp, onLogout: () -> Unit = {}) {
+fun ProfileScreen(topPadding: androidx.compose.ui.unit.Dp = 0.dp, bottomPadding: androidx.compose.ui.unit.Dp = 0.dp, onLogout: () -> Unit = {}) {
     val context = LocalContext.current
     val userName = remember { UserPrefs.getUserName(context) }
     val userEmail = remember { UserPrefs.getUserEmail(context) }
@@ -274,6 +277,7 @@ fun ProfileScreen(bottomPadding: androidx.compose.ui.unit.Dp = 0.dp, onLogout: (
             .fillMaxSize()
             .background(BackgroundWhite)
             .verticalScroll(rememberScrollState())
+            .padding(top = topPadding)
             .padding(24.dp)
             .padding(bottom = bottomPadding)
     ) {
