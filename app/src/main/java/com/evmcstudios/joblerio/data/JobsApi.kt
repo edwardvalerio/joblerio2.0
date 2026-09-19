@@ -134,7 +134,7 @@ object JobsApi {
     suspend fun searchJobs(
         query: String,
         location: String,
-        radius: Int = 25,
+        filter: FilterState = FilterState(),
         start: Int = 0,
         limit: Int = PAGE_SIZE
     ): Result<JobSearchResult> = withContext(Dispatchers.IO) {
@@ -142,18 +142,23 @@ object JobsApi {
             val encodedQuery = URLEncoder.encode(query.ifBlank { "jobs" }, "UTF-8")
             val encodedLocation = URLEncoder.encode(location.ifBlank { "95054" }, "UTF-8")
 
-            val url = "$BASE_URL" +
+            var url = "$BASE_URL" +
                 "?CID=$CID" +
                 "&CHID=$CHID" +
                 "&format=JSON2" +
                 "&q=$encodedQuery" +
                 "&l=$encodedLocation" +
-                "&r=$radius" +
-                "&s=relevance" +
+                "&r=${filter.radius}" +
+                "&s=${filter.sortBy}" +
                 "&start=$start" +
                 "&limit=$limit" +
                 "&userip=${getDeviceIp()}" +
                 "&useragent=${URLEncoder.encode(getUserAgent(), "UTF-8")}"
+
+            if (filter.categories.isNotEmpty()) {
+                val catParams = JobCategories.getCategoryParam(filter.categories)
+                url += "&$catParams"
+            }
 
             val request = Request.Builder()
                 .url(url)

@@ -112,6 +112,8 @@ class HomeScreenState(
         internal set
     var scrollOffset by mutableIntStateOf(0)
         internal set
+    var filter by mutableStateOf(FilterState())
+        internal set
 
     fun saveToPrefs(context: android.content.Context) {
         context.getSharedPreferences("home_state", android.content.Context.MODE_PRIVATE).edit()
@@ -176,6 +178,7 @@ fun HomeScreen(
                 val result = JobsApi.searchJobs(
                     query = query.ifBlank { "jobs" },
                     location = location.ifBlank { "95054" },
+                    filter = state.filter,
                     start = pageToLoad * 10,
                     limit = 10
                 )

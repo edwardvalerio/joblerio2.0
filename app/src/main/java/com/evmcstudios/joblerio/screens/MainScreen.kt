@@ -101,6 +101,7 @@ fun MainScreen(
     val state = homeScreenState
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    var showFilterSheet by remember { mutableStateOf(false) }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -180,7 +181,7 @@ fun MainScreen(
                                     tint = Color.White
                                 )
                             }
-                            IconButton(onClick = { }) {
+                            IconButton(onClick = { showFilterSheet = true }) {
                                 Icon(
                                     imageVector = Icons.Default.Tune,
                                     contentDescription = "Filter",
@@ -252,6 +253,37 @@ fun MainScreen(
             )
             }
         }
+    }
+
+    if (showFilterSheet) {
+        FilterBottomSheet(
+            currentFilter = state.filter,
+            onDismiss = { showFilterSheet = false },
+            onApply = { newFilter ->
+                state.filter = newFilter
+                scope.launch {
+                    state.jobs = emptyList()
+                    state.currentPage = 0
+                    state.hasMore = true
+                    state.isInitialLoadDone = false
+                    val result = com.evmcstudios.joblerio.data.JobsApi.searchJobs(
+                        query = state.searchQuery.ifBlank { "jobs" },
+                        location = state.locationQuery.ifBlank { "95054" },
+                        filter = newFilter,
+                        start = 0,
+                        limit = 10
+                    )
+                    result.onSuccess { searchResult ->
+                        state.jobs = searchResult.jobs
+                        state.totalResults = searchResult.totalResults
+                        state.currentPage = 0
+                        state.hasMore = state.jobs.size < searchResult.totalResults
+                    }
+                    state.isLoading = false
+                    state.isInitialLoadDone = true
+                }
+            }
+        )
     }
 }
 
