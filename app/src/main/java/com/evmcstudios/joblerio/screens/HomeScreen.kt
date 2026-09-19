@@ -191,7 +191,9 @@ fun HomeScreen(
     }
 
     DisposableEffect(Unit) {
+        Log.d("HomeScreen", "DisposableEffect composed, jobs=${state.jobs.size}")
         onDispose {
+            Log.d("HomeScreen", "DisposableEffect disposing, saving scroll: index=${listState.firstVisibleItemIndex}, offset=${listState.firstVisibleItemScrollOffset}")
             state.scrollIndex = listState.firstVisibleItemIndex
             state.scrollOffset = listState.firstVisibleItemScrollOffset
         }
