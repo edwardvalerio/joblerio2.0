@@ -121,6 +121,7 @@ class HomeScreenState(
         context.getSharedPreferences("home_state", android.content.Context.MODE_PRIVATE).edit()
             .putString("search_query", searchQuery)
             .putString("location_query", locationQuery)
+            .putString("last_searched_query", lastSearchedQuery)
             .putBoolean("initial_load_complete", initialLoadComplete)
             .apply()
     }
@@ -129,6 +130,7 @@ class HomeScreenState(
         val prefs = context.getSharedPreferences("home_state", android.content.Context.MODE_PRIVATE)
         searchQuery = prefs.getString("search_query", "") ?: ""
         locationQuery = prefs.getString("location_query", "") ?: ""
+        lastSearchedQuery = prefs.getString("last_searched_query", "") ?: ""
         initialLoadComplete = prefs.getBoolean("initial_load_complete", false)
         hasAttemptedInitialLoad = initialLoadComplete
         filter = FilterState.loadFromPrefs(context)
@@ -402,6 +404,7 @@ fun HomeScreen(
                                 state.filter.saveToPrefs(context)
                                 state.lastSearchedQuery = state.searchQuery
                             }
+                            state.saveToPrefs(context)
                             loadJobs(state.searchQuery, state.locationQuery)
                             scope.launch {
                                 listState.animateScrollToItem(0)
@@ -473,6 +476,7 @@ fun HomeScreen(
                                 state.filter.saveToPrefs(context)
                                 state.lastSearchedQuery = state.searchQuery
                             }
+                            state.saveToPrefs(context)
                             loadJobs(state.searchQuery, state.locationQuery)
                             scope.launch {
                                 listState.animateScrollToItem(0)
