@@ -105,6 +105,7 @@ class HomeScreenState(
     internal var hasMore by mutableStateOf(true)
     internal var isInitialLoadDone by mutableStateOf(false)
     internal var hasAttemptedInitialLoad by mutableStateOf(false)
+    internal var initialLoadComplete by mutableStateOf(false)
     var scrollIndex by mutableIntStateOf(0)
         internal set
     var scrollOffset by mutableIntStateOf(0)
@@ -131,6 +132,7 @@ fun HomeScreen(
     )
 
     fun loadJobs(query: String, location: String, loadMore: Boolean = false) {
+        Log.d("HomeScreen", "loadJobs called: query=$query, location=$location, loadMore=$loadMore, jobs=${state.jobs.size}, isLoading=${state.isLoading}")
         scope.launch {
             if (loadMore) {
                 state.isLoadingMore = true
@@ -164,6 +166,7 @@ fun HomeScreen(
             }
             state.isLoading = false
             state.isInitialLoadDone = true
+            Log.d("HomeScreen", "loadJobs finished: jobs=${state.jobs.size}, isInitialLoadDone=${state.isInitialLoadDone}")
             if (loadMore) {
                 delay(500)
                 state.isLoadingMore = false
@@ -176,16 +179,13 @@ fun HomeScreen(
     ) { permissions ->
         val granted = permissions.values.any { it }
         Log.d("HomeScreen", "Location permission granted: $granted")
-        scope.launch {
-            if (granted) {
+        if (granted) {
+            scope.launch {
                 val detectedLocation = JobsApi.detectLocation(context)
                 Log.d("HomeScreen", "Detected location after permission: '$detectedLocation'")
                 if (detectedLocation.isNotBlank()) {
                     state.locationQuery = detectedLocation
                 }
-            }
-            if (state.jobs.isEmpty() && !state.isLoading) {
-                loadJobs(state.searchQuery.ifBlank { "jobs" }, state.locationQuery.ifBlank { "95054" })
             }
         }
     }
@@ -204,8 +204,9 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(state.isInitialLoadDone) {
-        if (!state.isInitialLoadDone && !state.hasAttemptedInitialLoad && state.jobs.isEmpty()) {
+    LaunchedEffect(Unit) {
+        Log.d("HomeScreen", "LaunchedEffect(Unit) triggered, initialLoadComplete=${state.initialLoadComplete}, hasAttempted=${state.hasAttemptedInitialLoad}")
+        if (!state.initialLoadComplete && !state.hasAttemptedInitialLoad) {
             state.hasAttemptedInitialLoad = true
 
             val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
@@ -230,6 +231,7 @@ fun HomeScreen(
                     arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
                 )
             }
+            state.initialLoadComplete = true
         }
     }
 
@@ -237,7 +239,9 @@ fun HomeScreen(
         if (!state.isInitialLoadDone || state.isLoading || state.isLoadingMore || !state.hasMore || state.jobs.isEmpty()) return@LaunchedEffect
         val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
         val totalItems = listState.layoutInfo.totalItemsCount
+        Log.d("HomeScreen", "Infinite scroll check: lastVisible=$lastVisibleItem, total=$totalItems")
         if (lastVisibleItem >= totalItems - 3) {
+            Log.d("HomeScreen", "Triggering loadMore")
             loadJobs(state.searchQuery.ifBlank { "jobs" }, state.locationQuery.ifBlank { "95054" }, loadMore = true)
         }
     }
