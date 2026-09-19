@@ -293,7 +293,6 @@ fun HomeScreen(
                         tint = Color.White
                     )
                 }
-                }
             }
         }
 
@@ -379,7 +378,6 @@ fun HomeScreen(
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )
-                    }
                 }
             }
         }
