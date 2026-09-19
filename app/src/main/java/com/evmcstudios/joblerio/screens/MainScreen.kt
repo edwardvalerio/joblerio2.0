@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.evmcstudios.joblerio.data.Analytics
 import com.evmcstudios.joblerio.data.SavedJobsManager
 import com.evmcstudios.joblerio.data.UserPrefs
 import com.evmcstudios.joblerio.ui.theme.BackgroundWhite
@@ -99,7 +100,13 @@ fun MainScreen(
                             )
                         },
                         selected = selectedTabIndex == index,
-                        onClick = { selectedTabIndex = index },
+                        onClick = {
+                            selectedTabIndex = index
+                            when (index) {
+                                1 -> Analytics.trackScreenView("Saved")
+                                2 -> Analytics.trackScreenView("Profile")
+                            }
+                        },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = PrimaryBlue,
                             selectedTextColor = PrimaryBlue,

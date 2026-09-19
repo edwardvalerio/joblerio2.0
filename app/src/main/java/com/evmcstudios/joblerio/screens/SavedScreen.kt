@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.evmcstudios.joblerio.data.Analytics
 import com.evmcstudios.joblerio.data.Job
 import com.evmcstudios.joblerio.data.SavedJobsManager
 import com.evmcstudios.joblerio.ui.theme.BackgroundWhite
@@ -122,6 +123,7 @@ fun SavedScreen(
                         onClick = { onJobClick(job.url, job.title, job.company, job.city, job.state, job.date, job.snippet) },
                         onUnsave = {
                             SavedJobsManager.removeJob(context, job)
+                            Analytics.trackJobUnsave(job.title, job.company)
                             savedJobs = SavedJobsManager.getSavedJobs(context)
                         }
                     )

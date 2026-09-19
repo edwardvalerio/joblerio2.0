@@ -44,6 +44,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.evmcstudios.joblerio.R
+import com.evmcstudios.joblerio.data.Analytics
 import com.evmcstudios.joblerio.data.UserPrefs
 import com.evmcstudios.joblerio.ui.theme.PrimaryBlue
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -88,6 +89,7 @@ fun LoginScreen(
                             val userEmail = account.email ?: ""
                             val avatarUrl = account.photoUrl?.toString() ?: ""
                             UserPrefs.saveUser(context, userName, userEmail, avatarUrl)
+                            Analytics.trackLogin("google")
                             onLoginSuccess(userName)
                         }
                         googleLoading = false

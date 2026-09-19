@@ -52,6 +52,25 @@ object JobsApi {
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
     }
 
+    suspend fun detectLocationFromIp(): String = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder()
+                .url("https://ipapi.co/json/")
+                .header("User-Agent", getUserAgent())
+                .build()
+            val response = client.newCall(request).execute()
+            val body = response.body?.string() ?: return@withContext ""
+            val json = com.google.gson.JsonParser.parseString(body).asJsonObject
+            val city = json.get("city")?.asString ?: ""
+            val region = json.get("region")?.asString ?: ""
+            if (city.isNotBlank() && region.isNotBlank()) "$city, $region"
+            else if (city.isNotBlank()) city
+            else ""
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
     suspend fun searchJobs(
         query: String,
         location: String,

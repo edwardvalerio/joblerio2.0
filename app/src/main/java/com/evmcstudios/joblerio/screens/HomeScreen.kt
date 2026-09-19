@@ -60,6 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.evmcstudios.joblerio.data.Analytics
 import com.evmcstudios.joblerio.data.Job
 import com.evmcstudios.joblerio.data.JobsApi
 import com.evmcstudios.joblerio.data.SavedJobsManager
@@ -179,9 +180,13 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        if (state.jobs.isEmpty() && !state.hasAttemptedInitialLoad) {
+    LaunchedEffect(state.isInitialLoadDone) {
+        if (!state.isInitialLoadDone && !state.hasAttemptedInitialLoad && state.jobs.isEmpty()) {
             state.hasAttemptedInitialLoad = true
+            val detectedLocation = JobsApi.detectLocationFromIp()
+            if (detectedLocation.isNotBlank() && state.locationQuery.isBlank()) {
+                state.locationQuery = detectedLocation
+            }
             loadJobs(state.searchQuery.ifBlank { "jobs" }, state.locationQuery.ifBlank { "95054" })
         }
     }
@@ -308,6 +313,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     TextButton(
                         onClick = {
+                            Analytics.trackSearch(state.searchQuery, state.locationQuery)
                             loadJobs(state.searchQuery, state.locationQuery)
                             scope.launch {
                                 listState.animateScrollToItem(0)
@@ -373,6 +379,7 @@ fun HomeScreen(
                     )
                     IconButton(
                         onClick = {
+                            Analytics.trackSearch(state.searchQuery, state.locationQuery)
                             loadJobs(state.searchQuery, state.locationQuery)
                             scope.launch {
                                 listState.animateScrollToItem(0)
@@ -585,8 +592,10 @@ fun JobCard(
                     onClick = {
                         if (isSaved) {
                             SavedJobsManager.removeJob(context, job)
+                            Analytics.trackJobUnsave(job.title, job.company)
                         } else {
                             SavedJobsManager.saveJob(context, job)
+                            Analytics.trackJobSave(job.title, job.company)
                         }
                         isSaved = !isSaved
                     }

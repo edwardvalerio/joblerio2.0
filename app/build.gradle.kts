@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.analytics)
     implementation(libs.play.services.auth)
     implementation(libs.coil.compose)
     testImplementation(libs.junit)

@@ -5,12 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.evmcstudios.joblerio.data.Analytics
 import com.evmcstudios.joblerio.data.UserPrefs
 import com.evmcstudios.joblerio.screens.LoginScreen
 import com.evmcstudios.joblerio.screens.MainScreen
@@ -24,6 +26,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        Analytics.init()
         setContent {
             JoblerioTheme {
                 JoblerioApp()
@@ -41,6 +44,7 @@ fun JoblerioApp() {
 
     NavHost(navController = navController, startDestination = startDest) {
         composable("splash") {
+            LaunchedEffect(Unit) { Analytics.trackScreenView("Splash") }
             SplashScreen(
                 onSplashFinished = {
                     if (UserPrefs.isLoggedIn(context)) {
@@ -56,13 +60,16 @@ fun JoblerioApp() {
             )
         }
         composable("login") {
+            LaunchedEffect(Unit) { Analytics.trackScreenView("Login") }
             LoginScreen(
                 onLoginSuccess = { name ->
+                    Analytics.trackLogin("email")
                     navController.navigate("main") {
                         popUpTo("login") { inclusive = true }
                     }
                 },
                 onSkip = {
+                    Analytics.trackSkipLogin()
                     navController.navigate("main") {
                         popUpTo("login") { inclusive = true }
                     }
@@ -70,15 +77,18 @@ fun JoblerioApp() {
             )
         }
         composable("main") {
+            LaunchedEffect(Unit) { Analytics.trackScreenView("Main") }
             val name = UserPrefs.getUserName(context)
             MainScreen(
                 userName = name,
                 onJobClick = { url, jobTitle, company, city, state, date, snippet ->
+                    Analytics.trackJobClick(jobTitle, company)
                     val args = listOf(url, jobTitle, company, city, state, date, snippet)
                         .joinToString("&") { URLEncoder.encode(it, "UTF-8") }
                     navController.navigate("webview/$args")
                 },
                 onLogout = {
+                    Analytics.trackLogout()
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
@@ -91,6 +101,7 @@ fun JoblerioApp() {
                 navArgument("args") { type = NavType.StringType }
             )
         ) { backStackEntry ->
+            LaunchedEffect(Unit) { Analytics.trackScreenView("Job Detail") }
             val decoded = URLDecoder.decode(backStackEntry.arguments?.getString("args") ?: "", "UTF-8")
             val parts = decoded.split("&")
             val url = parts.getOrElse(0) { "" }
