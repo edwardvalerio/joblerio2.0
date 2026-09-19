@@ -381,8 +381,9 @@ fun HomeScreen(
                 }
             }
         }
+    }
 
-        AnimatedVisibility(
+    AnimatedVisibility(
             visible = isSearchCollapsed,
             enter = expandVertically(tween(300)),
             exit = shrinkVertically(tween(300))
