@@ -65,6 +65,7 @@ data class BottomNavItem(
 @Composable
 fun MainScreen(
     userName: String = "",
+    homeScreenState: HomeScreenState = rememberHomeScreenState(),
     onJobClick: (String, String, String, String, String, String, String) -> Unit,
     onLogout: () -> Unit = {}
 ) {
@@ -75,7 +76,7 @@ fun MainScreen(
     )
 
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val homeScreenState = rememberHomeScreenState()
+    val state = homeScreenState
 
     Scaffold(
         containerColor = BackgroundWhite,
@@ -121,7 +122,7 @@ fun MainScreen(
     ) { innerPadding ->
         when (selectedTabIndex) {
             0 -> HomeScreen(
-                state = homeScreenState,
+                state = state,
                 userName = userName,
                 bottomPadding = innerPadding.calculateBottomPadding(),
                 onJobClick = onJobClick

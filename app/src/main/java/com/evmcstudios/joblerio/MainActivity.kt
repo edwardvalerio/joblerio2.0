@@ -18,6 +18,7 @@ import com.evmcstudios.joblerio.screens.LoginScreen
 import com.evmcstudios.joblerio.screens.MainScreen
 import com.evmcstudios.joblerio.screens.SplashScreen
 import com.evmcstudios.joblerio.screens.WebViewScreen
+import com.evmcstudios.joblerio.screens.rememberHomeScreenState
 import com.evmcstudios.joblerio.ui.theme.JoblerioTheme
 import java.net.URLDecoder
 import java.net.URLEncoder
@@ -41,6 +42,7 @@ fun JoblerioApp() {
     val navController = rememberNavController()
     val userName = UserPrefs.getUserName(context)
     val startDest = if (UserPrefs.isLoggedIn(context)) "main" else "splash"
+    val homeScreenState = rememberHomeScreenState()
 
     NavHost(navController = navController, startDestination = startDest) {
         composable("splash") {
@@ -81,6 +83,7 @@ fun JoblerioApp() {
             val name = UserPrefs.getUserName(context)
             MainScreen(
                 userName = name,
+                homeScreenState = homeScreenState,
                 onJobClick = { url, jobTitle, company, city, state, date, snippet ->
                     Analytics.trackJobClick(jobTitle, company)
                     val args = listOf(url, jobTitle, company, city, state, date, snippet)
