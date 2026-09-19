@@ -1,6 +1,11 @@
 package com.evmcstudios.joblerio.screens
 
 import android.content.Context
+import android.Manifest
+import android.content.pm.PackageManager
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -125,6 +130,16 @@ fun HomeScreen(
         initialFirstVisibleItemScrollOffset = state.scrollOffset
     )
 
+    var pendingLocationDetection by remember { mutableStateOf(false) }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions.values.any { it }
+        Log.d("HomeScreen", "Location permission granted: $granted")
+        pendingLocationDetection = true
+    }
+
     DisposableEffect(Unit) {
         onDispose {
             state.scrollIndex = listState.firstVisibleItemIndex
@@ -183,7 +198,38 @@ fun HomeScreen(
     LaunchedEffect(state.isInitialLoadDone) {
         if (!state.isInitialLoadDone && !state.hasAttemptedInitialLoad && state.jobs.isEmpty()) {
             state.hasAttemptedInitialLoad = true
-            val detectedLocation = JobsApi.detectLocationFromIp()
+
+            val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED ||
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!hasPermission) {
+                Log.d("HomeScreen", "Requesting location permission")
+                locationPermissionLauncher.launch(
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+                )
+                return@LaunchedEffect
+            }
+
+            Log.d("HomeScreen", "Detecting location...")
+            val detectedLocation = JobsApi.detectLocation(context)
+            Log.d("HomeScreen", "Detected location: '$detectedLocation'")
+            if (detectedLocation.isNotBlank() && state.locationQuery.isBlank()) {
+                state.locationQuery = detectedLocation
+            }
+            loadJobs(state.searchQuery.ifBlank { "jobs" }, state.locationQuery.ifBlank { "95054" })
+        }
+    }
+
+    LaunchedEffect(pendingLocationDetection) {
+        if (pendingLocationDetection && !state.isInitialLoadDone) {
+            pendingLocationDetection = false
+            Log.d("HomeScreen", "Permission result received, detecting location...")
+            val detectedLocation = JobsApi.detectLocation(context)
+            Log.d("HomeScreen", "Detected location after permission: '$detectedLocation'")
             if (detectedLocation.isNotBlank() && state.locationQuery.isBlank()) {
                 state.locationQuery = detectedLocation
             }

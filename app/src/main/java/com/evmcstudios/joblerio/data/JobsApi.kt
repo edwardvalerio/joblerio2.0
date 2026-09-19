@@ -1,7 +1,18 @@
 package com.evmcstudios.joblerio.data
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Geocoder
+import android.location.LocationManager
 import android.os.Build
+import android.util.Log
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -52,21 +63,63 @@ object JobsApi {
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
     }
 
-    suspend fun detectLocationFromIp(): String = withContext(Dispatchers.IO) {
+    suspend fun detectLocation(context: Context): String = withContext(Dispatchers.IO) {
         try {
-            val request = Request.Builder()
-                .url("https://ipapi.co/json/")
-                .header("User-Agent", getUserAgent())
-                .build()
-            val response = client.newCall(request).execute()
-            val body = response.body?.string() ?: return@withContext ""
-            val json = com.google.gson.JsonParser.parseString(body).asJsonObject
-            val city = json.get("city")?.asString ?: ""
-            val region = json.get("region")?.asString ?: ""
-            if (city.isNotBlank() && region.isNotBlank()) "$city, $region"
-            else if (city.isNotBlank()) city
-            else ""
+            val hasPermission = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!hasPermission) {
+                Log.d("JobsApi", "No location permission")
+                return@withContext ""
+            }
+
+            val fusedClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+            val location = fusedClient.lastLocation.await()
+
+            if (location != null) {
+                Log.d("JobsApi", "Got location: ${location.latitude}, ${location.longitude}")
+                val geocoder = Geocoder(context, java.util.Locale.getDefault())
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                    val address = addresses?.firstOrNull()
+                    if (address != null) {
+                        val city = address.locality ?: address.subAdminArea ?: ""
+                        val state = address.adminArea ?: ""
+                        val result = when {
+                            city.isNotBlank() && state.isNotBlank() -> "$city, $state"
+                            city.isNotBlank() -> city
+                            state.isNotBlank() -> state
+                            else -> ""
+                        }
+                        Log.d("JobsApi", "Geocoded location: $result")
+                        return@withContext result
+                    }
+                } else {
+                    @Suppress("DEPRECATION")
+                    val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                    val address = addresses?.firstOrNull()
+                    if (address != null) {
+                        val city = address.locality ?: address.subAdminArea ?: ""
+                        val state = address.adminArea ?: ""
+                        val result = when {
+                            city.isNotBlank() && state.isNotBlank() -> "$city, $state"
+                            city.isNotBlank() -> city
+                            state.isNotBlank() -> state
+                            else -> ""
+                        }
+                        Log.d("JobsApi", "Geocoded location: $result")
+                        return@withContext result
+                    }
+                }
+            }
+            Log.d("JobsApi", "No location obtained")
+            ""
         } catch (e: Exception) {
+            Log.e("JobsApi", "Location detection failed: ${e.message}")
             ""
         }
     }
