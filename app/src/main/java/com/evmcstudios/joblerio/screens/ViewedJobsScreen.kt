@@ -18,14 +18,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,10 +52,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewedJobsScreen(
-    topPadding: androidx.compose.ui.unit.Dp = 0.dp,
-    bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
+    onBack: () -> Unit,
     onJobClick: (String, String, String, String, String, String, String) -> Unit
 ) {
     val context = LocalContext.current
@@ -63,8 +65,21 @@ fun ViewedJobsScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundWhite)
-            .padding(top = topPadding)
     ) {
+        TopAppBar(
+            title = { Text("Viewed Jobs", fontSize = 18.sp, color = TitleDark) },
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = TitleDark
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+        )
+
         if (viewedJobs.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -74,7 +89,7 @@ fun ViewedJobsScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        imageVector = Icons.Default.History,
+                        imageVector = Icons.Default.Delete,
                         contentDescription = null,
                         tint = TextGray.copy(alpha = 0.4f),
                         modifier = Modifier.size(64.dp)
@@ -99,20 +114,18 @@ fun ViewedJobsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp)
-                    .padding(bottom = bottomPadding)
             ) {
                 item {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Viewed Jobs (${viewedJobs.size})",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TitleDark
+                            text = "${viewedJobs.size} jobs viewed",
+                            fontSize = 14.sp,
+                            color = TextGray
                         )
                         TextButton(onClick = {
                             ViewedJobsManager.clearViewedJobs(context)
@@ -121,7 +134,7 @@ fun ViewedJobsScreen(
                             Text("Clear All", fontSize = 13.sp, color = Color(0xFFFF6B6B))
                         }
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
 
                 items(viewedJobs) { job ->
@@ -132,9 +145,7 @@ fun ViewedJobsScreen(
                         },
                         onRemove = {
                             ViewedJobsManager.clearViewedJobs(context)
-                            val updated = ViewedJobsManager.getViewedJobs(context).toMutableList()
-                            updated.removeAll { it.url == job.url }
-                            viewedJobs = updated
+                            viewedJobs = ViewedJobsManager.getViewedJobs(context)
                         }
                     )
                     Spacer(modifier = Modifier.height(10.dp))
@@ -212,5 +223,12 @@ fun ViewedJobCard(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun TextButton(onClick: () -> Unit, content: @Composable () -> Unit) {
+    androidx.compose.material3.TextButton(onClick = onClick) {
+        content()
     }
 }

@@ -25,7 +25,8 @@ object ViewedJobsManager {
 
     fun addViewedJob(context: Context, job: ViewedJob) {
         val viewed = getViewedJobs(context).toMutableList()
-        viewed.removeAll { it.url == job.url }
+        val key = "${job.title}_${job.company}"
+        viewed.removeAll { "${it.title}_${it.company}" == key }
         viewed.add(0, job)
         if (viewed.size > MAX_VIEWED) {
             viewed.subList(MAX_VIEWED, viewed.size).clear()

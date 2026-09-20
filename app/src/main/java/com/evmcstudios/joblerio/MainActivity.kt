@@ -221,6 +221,7 @@ fun JoblerioApp() {
         }
         composable("viewed_jobs") {
             ViewedJobsScreen(
+                onBack = { navController.popBackStack() },
                 onJobClick = { url, title, company, city, state, date, snippet ->
                     val args = listOf(url, title, company, city, state, date, snippet)
                         .joinToString("&") { URLEncoder.encode(it, "UTF-8") }
