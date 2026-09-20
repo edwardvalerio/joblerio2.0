@@ -106,6 +106,7 @@ fun MainScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var showFilterSheet by remember { mutableStateOf(false) }
+    var showAlertDialog by remember { mutableStateOf(false) }
     val hasActiveFilters = !state.filter.isDefault
     val context = LocalContext.current
 
@@ -180,7 +181,7 @@ fun MainScreen(
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         if (selectedTabIndex == 0) {
-                            IconButton(onClick = { }) {
+                            IconButton(onClick = { showAlertDialog = true }) {
                                 Icon(
                                     imageVector = Icons.Default.Notifications,
                                     contentDescription = "Notifications",
@@ -300,6 +301,14 @@ fun MainScreen(
                     state.isInitialLoadDone = true
                 }
             }
+        )
+    }
+
+    if (showAlertDialog) {
+        AlertSetupDialog(
+            currentQuery = state.searchQuery,
+            currentLocation = state.locationQuery,
+            onDismiss = { showAlertDialog = false }
         )
     }
 }

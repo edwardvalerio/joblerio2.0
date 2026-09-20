@@ -35,6 +35,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         Analytics.init()
+        NotificationHelper.createNotificationChannel(this)
 
         lifecycleScope.launch {
             try {
