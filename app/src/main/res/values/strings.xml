@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Joblerio</string>
+    <string name="widget_description">Shows latest job listings on your home screen</string>
 </resources>

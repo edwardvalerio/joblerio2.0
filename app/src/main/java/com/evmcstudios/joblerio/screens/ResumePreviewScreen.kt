@@ -328,7 +328,7 @@ private fun renderModernPdf(canvas: android.graphics.Canvas, paint: android.grap
             })
             yPos += 12f
             canvas.drawText(edu.school, 20f, yPos, paint.apply {
-                this.color = android.graphics.Color.WHITE.copy(alpha = 0.7f)
+                this.color = android.graphics.Color.argb(178, 255, 255, 255)
                 this.textSize = 8f
             })
             yPos += 14f
