@@ -378,7 +378,9 @@ fun HomeScreen(
                             unfocusedBorderColor = Color.Transparent,
                             focusedBorderColor = PrimaryBlue,
                             unfocusedContainerColor = SearchBarBg,
-                            focusedContainerColor = SearchBarBg
+                            focusedContainerColor = SearchBarBg,
+                            focusedTextColor = TitleDark,
+                            unfocusedTextColor = TitleDark
                         ),
                         singleLine = true
                     )
@@ -400,7 +402,9 @@ fun HomeScreen(
                             unfocusedBorderColor = Color.Transparent,
                             focusedBorderColor = PrimaryBlue,
                             unfocusedContainerColor = SearchBarBg,
-                            focusedContainerColor = SearchBarBg
+                            focusedContainerColor = SearchBarBg,
+                            focusedTextColor = TitleDark,
+                            unfocusedTextColor = TitleDark
                         ),
                         singleLine = true
                     )
@@ -469,12 +473,14 @@ fun HomeScreen(
                         modifier = Modifier
                             .weight(1f)
                             .padding(horizontal = 8.dp),
-                        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
+                        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = TitleDark),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.Transparent,
                             focusedBorderColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
-                            focusedContainerColor = Color.Transparent
+                            focusedContainerColor = Color.Transparent,
+                            focusedTextColor = TitleDark,
+                            unfocusedTextColor = TitleDark
                         ),
                         singleLine = true
                     )
