@@ -2,7 +2,6 @@ package com.evmcstudios.joblerio.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
@@ -29,13 +30,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -56,6 +60,7 @@ import com.evmcstudios.joblerio.data.PersonalInfo
 import com.evmcstudios.joblerio.data.Resume
 import com.evmcstudios.joblerio.data.ResumeManager
 import com.evmcstudios.joblerio.data.ResumeTemplate
+import com.evmcstudios.joblerio.data.UserPrefs
 import com.evmcstudios.joblerio.ui.theme.BackgroundWhite
 import com.evmcstudios.joblerio.ui.theme.CardWhite
 import com.evmcstudios.joblerio.ui.theme.PrimaryBlue
@@ -91,10 +96,21 @@ fun ResumeEditorScreen(
             .fillMaxSize()
             .background(BackgroundWhite)
     ) {
-        TabRow(
+        TopAppBar(
+            title = { Text("Edit Resume", fontSize = 18.sp, color = TitleDark) },
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TitleDark)
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+        )
+
+        ScrollableTabRow(
             selectedTabIndex = selectedTab,
             containerColor = CardWhite,
             contentColor = PrimaryBlue,
+            edgePadding = 0.dp,
             indicator = { tabPositions ->
                 TabRowDefaults.Indicator(
                     modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
@@ -109,8 +125,9 @@ fun ResumeEditorScreen(
                     text = {
                         Text(
                             text = title,
-                            fontSize = 14.sp,
-                            fontWeight = if (selectedTab == index) FontWeight.SemiBold else FontWeight.Normal
+                            fontSize = 13.sp,
+                            fontWeight = if (selectedTab == index) FontWeight.SemiBold else FontWeight.Normal,
+                            maxLines = 1
                         )
                     }
                 )
@@ -120,6 +137,7 @@ fun ResumeEditorScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
@@ -275,7 +293,7 @@ fun InfoTab(resume: Resume, onUpdate: (Resume) -> Unit) {
             FilterChip(
                 selected = resume.templateId == template.id,
                 onClick = { onUpdate(resume.copy(templateId = template.id)) },
-                label = { Text(template.displayName, fontSize = 13.sp) },
+                label = { Text(template.displayName, fontSize = 12.sp) },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = PrimaryBlue,
                     selectedLabelColor = Color.White,
@@ -363,7 +381,7 @@ fun ExperienceTab(resume: Resume, onUpdate: (Resume) -> Unit) {
                             updated[index] = exp.copy(startDate = value)
                             onUpdate(resume.copy(experience = updated))
                         },
-                        label = { Text("Start Date") },
+                        label = { Text("Start") },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(10.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -381,7 +399,7 @@ fun ExperienceTab(resume: Resume, onUpdate: (Resume) -> Unit) {
                             updated[index] = exp.copy(endDate = value, current = false)
                             onUpdate(resume.copy(experience = updated))
                         },
-                        label = { Text("End Date") },
+                        label = { Text("End") },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(10.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -495,7 +513,7 @@ fun EducationTab(resume: Resume, onUpdate: (Resume) -> Unit) {
                             updated[index] = edu.copy(field = value)
                             onUpdate(resume.copy(education = updated))
                         },
-                        label = { Text("Field of Study") },
+                        label = { Text("Field") },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(10.dp),
                         colors = fieldColors,
