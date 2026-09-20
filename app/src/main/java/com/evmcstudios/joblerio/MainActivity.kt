@@ -21,6 +21,9 @@ import com.evmcstudios.joblerio.data.RemoteConfigManager
 import com.evmcstudios.joblerio.data.UserPrefs
 import com.evmcstudios.joblerio.screens.LoginScreen
 import com.evmcstudios.joblerio.screens.MainScreen
+import com.evmcstudios.joblerio.screens.ResumeEditorScreen
+import com.evmcstudios.joblerio.screens.ResumeListScreen
+import com.evmcstudios.joblerio.screens.ResumePreviewScreen
 import com.evmcstudios.joblerio.screens.SimpleWebViewScreen
 import com.evmcstudios.joblerio.screens.SplashScreen
 import com.evmcstudios.joblerio.screens.WebViewScreen
@@ -120,6 +123,9 @@ fun JoblerioApp() {
                     val encodedTitle = URLEncoder.encode(title, "UTF-8")
                     navController.navigate("simple_webview/$encodedUrl/$encodedTitle")
                 },
+                onResumeBuilder = {
+                    navController.navigate("resume_list")
+                },
                 onLogout = {
                     Analytics.trackLogout()
                     navController.navigate("login") {
@@ -169,6 +175,43 @@ fun JoblerioApp() {
             SimpleWebViewScreen(
                 url = url,
                 title = title,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("resume_list") {
+            ResumeListScreen(
+                onResumeClick = { resumeId ->
+                    navController.navigate("resume_editor/$resumeId")
+                },
+                onCreateResume = {
+                    navController.navigate("resume_editor/new")
+                }
+            )
+        }
+        composable(
+            route = "resume_editor/{resumeId}",
+            arguments = listOf(
+                navArgument("resumeId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val resumeId = backStackEntry.arguments?.getString("resumeId") ?: "new"
+            ResumeEditorScreen(
+                resumeId = if (resumeId == "new") null else resumeId,
+                onBack = { navController.popBackStack() },
+                onPreview = { id ->
+                    navController.navigate("resume_preview/$id")
+                }
+            )
+        }
+        composable(
+            route = "resume_preview/{resumeId}",
+            arguments = listOf(
+                navArgument("resumeId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val resumeId = backStackEntry.arguments?.getString("resumeId") ?: ""
+            ResumePreviewScreen(
+                resumeId = resumeId,
                 onBack = { navController.popBackStack() }
             )
         }

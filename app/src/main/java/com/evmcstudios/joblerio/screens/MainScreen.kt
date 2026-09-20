@@ -91,6 +91,7 @@ fun MainScreen(
     homeScreenState: HomeScreenState = rememberHomeScreenState(),
     onJobClick: (String, String, String, String, String, String, String) -> Unit,
     onOpenLink: (String, String) -> Unit = { _, _ -> },
+    onResumeBuilder: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     val bottomNavItems = listOf(
@@ -148,6 +149,16 @@ fun MainScreen(
                     onClick = {
                         scope.launch { drawerState.close() }
                         onOpenLink("https://joblerio.evmcstudios.com/terms.html", "Terms & Conditions")
+                    },
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    colors = NavigationDrawerItemDefaults.colors(unselectedTextColor = TitleDark)
+                )
+                NavigationDrawerItem(
+                    label = { Text("Resume Builder", fontSize = 16.sp) },
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        onResumeBuilder()
                     },
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                     colors = NavigationDrawerItemDefaults.colors(unselectedTextColor = TitleDark)
