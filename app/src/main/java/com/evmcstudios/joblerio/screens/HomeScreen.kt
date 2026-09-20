@@ -553,7 +553,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            if (state.isLoading) {
+            if (state.isLoading || (state.isRefreshing && state.jobs.isEmpty())) {
                 item {
                     JobListSkeleton(count = 5)
                 }
