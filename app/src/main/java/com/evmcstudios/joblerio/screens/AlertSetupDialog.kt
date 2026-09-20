@@ -57,7 +57,7 @@ fun AlertSetupDialog(
     var query by remember { mutableStateOf(currentQuery) }
     var location by remember { mutableStateOf(currentLocation) }
     var frequency by remember { mutableStateOf("daily") }
-    val existingAlerts = remember { AlertManager.getAlerts(context) }
+    var existingAlerts by remember { mutableStateOf(AlertManager.getAlerts(context)) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -148,7 +148,7 @@ fun AlertSetupDialog(
                         color = TitleDark
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    existingAlerts.take(3).forEach { alert ->
+                    existingAlerts.forEach { alert ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -178,6 +178,7 @@ fun AlertSetupDialog(
                             IconButton(
                                 onClick = {
                                     AlertManager.toggleAlert(context, alert.id)
+                                    existingAlerts = AlertManager.getAlerts(context)
                                 },
                                 modifier = Modifier.size(32.dp)
                             ) {
@@ -191,6 +192,7 @@ fun AlertSetupDialog(
                             IconButton(
                                 onClick = {
                                     AlertManager.removeAlert(context, alert.id)
+                                    existingAlerts = AlertManager.getAlerts(context)
                                 },
                                 modifier = Modifier.size(32.dp)
                             ) {
@@ -220,6 +222,7 @@ fun AlertSetupDialog(
                         )
                         com.evmcstudios.joblerio.NotificationHelper.createNotificationChannel(context)
                         com.evmcstudios.joblerio.NotificationHelper.schedulePeriodicCheck(context)
+                        existingAlerts = AlertManager.getAlerts(context)
                     }
                     onDismiss()
                 }
