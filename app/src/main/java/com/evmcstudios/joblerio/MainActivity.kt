@@ -123,8 +123,8 @@ fun JoblerioApp() {
                     val encodedTitle = URLEncoder.encode(title, "UTF-8")
                     navController.navigate("simple_webview/$encodedUrl/$encodedTitle")
                 },
-                onResumeBuilder = {
-                    navController.navigate("resume_list")
+                onResumeEdit = { resumeId ->
+                    navController.navigate("resume_editor/$resumeId")
                 },
                 onLogout = {
                     Analytics.trackLogout()

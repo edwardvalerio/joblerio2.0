@@ -56,6 +56,8 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResumeListScreen(
+    topPadding: androidx.compose.ui.unit.Dp = 0.dp,
+    bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
     onResumeClick: (String) -> Unit,
     onCreateResume: () -> Unit
 ) {
@@ -66,6 +68,8 @@ fun ResumeListScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundWhite)
+            .padding(top = topPadding)
+            .padding(bottom = bottomPadding)
     ) {
         if (resumes.isEmpty()) {
             Column(

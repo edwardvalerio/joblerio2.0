@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
@@ -92,15 +93,17 @@ fun MainScreen(
     onJobClick: (String, String, String, String, String, String, String) -> Unit,
     onOpenLink: (String, String) -> Unit = { _, _ -> },
     onResumeBuilder: () -> Unit = {},
+    onResumeEdit: (String) -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     val bottomNavItems = listOf(
         BottomNavItem("Search", Icons.Filled.Search, "home"),
         BottomNavItem("Saved", Icons.Filled.Bookmark, "saved"),
+        BottomNavItem("Resume", Icons.Filled.Description, "resume"),
         BottomNavItem("Profile", Icons.Filled.Person, "profile")
     )
 
-    val tabTitles = listOf("Search", "Saved", "Profile")
+    val tabTitles = listOf("Search", "Saved", "Resume", "Profile")
 
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val state = homeScreenState
@@ -149,16 +152,6 @@ fun MainScreen(
                     onClick = {
                         scope.launch { drawerState.close() }
                         onOpenLink("https://joblerio.evmcstudios.com/terms.html", "Terms & Conditions")
-                    },
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                    colors = NavigationDrawerItemDefaults.colors(unselectedTextColor = TitleDark)
-                )
-                NavigationDrawerItem(
-                    label = { Text("Resume Builder", fontSize = 16.sp) },
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        onResumeBuilder()
                     },
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                     colors = NavigationDrawerItemDefaults.colors(unselectedTextColor = TitleDark)
@@ -277,7 +270,17 @@ fun MainScreen(
                 bottomPadding = innerPadding.calculateBottomPadding(),
                 onJobClick = onJobClick
             )
-            2 -> ProfileScreen(
+            2 -> ResumeListScreen(
+                topPadding = innerPadding.calculateTopPadding(),
+                bottomPadding = innerPadding.calculateBottomPadding(),
+                onResumeClick = { resumeId ->
+                    onResumeEdit(resumeId)
+                },
+                onCreateResume = {
+                    onResumeEdit("new")
+                }
+            )
+            3 -> ProfileScreen(
                 topPadding = innerPadding.calculateTopPadding(),
                 bottomPadding = innerPadding.calculateBottomPadding(),
                 onLogout = onLogout
