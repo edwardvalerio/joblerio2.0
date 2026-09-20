@@ -99,7 +99,9 @@ fun AlertSetupDialog(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = TextGray.copy(alpha = 0.3f),
-                        focusedBorderColor = PrimaryBlue
+                        focusedBorderColor = PrimaryBlue,
+                        focusedTextColor = TitleDark,
+                        unfocusedTextColor = TitleDark
                     )
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -120,7 +122,9 @@ fun AlertSetupDialog(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = TextGray.copy(alpha = 0.3f),
-                        focusedBorderColor = PrimaryBlue
+                        focusedBorderColor = PrimaryBlue,
+                        focusedTextColor = TitleDark,
+                        unfocusedTextColor = TitleDark
                     )
                 )
                 Spacer(modifier = Modifier.height(16.dp))
