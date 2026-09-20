@@ -36,7 +36,6 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.PullToRefreshBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -504,36 +503,6 @@ fun HomeScreen(
             }
         }
 
-        var isRefreshing by remember { mutableStateOf(false) }
-
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = {
-                scope.launch {
-                    isRefreshing = true
-                    state.jobs = emptyList()
-                    state.currentPage = 0
-                    state.hasMore = true
-                    state.isInitialLoadDone = false
-                    val result = JobsApi.searchJobs(
-                        query = state.searchQuery.ifBlank { "jobs" },
-                        location = state.locationQuery.ifBlank { "95054" },
-                        filter = state.filter,
-                        start = 0,
-                        limit = 10
-                    )
-                    result.onSuccess { searchResult ->
-                        state.jobs = searchResult.jobs
-                        state.totalResults = searchResult.totalResults
-                        state.currentPage = 0
-                        state.hasMore = state.jobs.size < searchResult.totalResults
-                    }
-                    state.isLoading = false
-                    state.isInitialLoadDone = true
-                    isRefreshing = false
-                }
-            }
-        ) {
         LazyColumn(
             state = listState,
             modifier = Modifier
@@ -682,7 +651,6 @@ fun HomeScreen(
             item {
                 Spacer(modifier = Modifier.height(bottomPadding + 16.dp))
             }
-        }
         }
     }
 }
