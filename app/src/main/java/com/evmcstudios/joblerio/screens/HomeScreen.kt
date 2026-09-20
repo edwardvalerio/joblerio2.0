@@ -40,7 +40,6 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -550,17 +549,7 @@ fun HomeScreen(
 
             if (state.isLoading) {
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 48.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            color = PrimaryBlue,
-                            modifier = Modifier.size(40.dp)
-                        )
-                    }
+                    JobListSkeleton(count = 5)
                 }
             }
 
@@ -648,17 +637,8 @@ fun HomeScreen(
 
             if (state.isLoadingMore) {
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 24.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            color = PrimaryBlue,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
+                    JobCardSkeleton()
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
             }
 

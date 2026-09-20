@@ -59,10 +59,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.evmcstudios.joblerio.R
 import com.evmcstudios.joblerio.data.Analytics
 import com.evmcstudios.joblerio.data.PostbackManager
 import com.evmcstudios.joblerio.data.RecentSearchManager
@@ -344,8 +346,11 @@ fun ProfileScreen(topPadding: androidx.compose.ui.unit.Dp = 0.dp, bottomPadding:
                         contentDescription = "Avatar",
                         modifier = Modifier
                             .size(64.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
+                            .clip(CircleShape)
+                            .background(PrimaryBlue.copy(alpha = 0.1f)),
+                        contentScale = ContentScale.Crop,
+                        error = painterResource(id = R.drawable.ic_empty_jobs),
+                        placeholder = painterResource(id = R.drawable.ic_empty_jobs)
                     )
                 } else {
                     Box(
