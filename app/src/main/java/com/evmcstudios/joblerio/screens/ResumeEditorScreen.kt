@@ -54,18 +54,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.evmcstudios.joblerio.data.Education
-import com.evmcstudios.joblerio.data.Experience
-import com.evmcstudios.joblerio.data.PersonalInfo
-import com.evmcstudios.joblerio.data.Resume
-import com.evmcstudios.joblerio.data.ResumeManager
-import com.evmcstudios.joblerio.data.ResumeTemplate
-import com.evmcstudios.joblerio.data.UserPrefs
-import com.evmcstudios.joblerio.ui.theme.BackgroundWhite
-import com.evmcstudios.joblerio.ui.theme.CardWhite
-import com.evmcstudios.joblerio.ui.theme.PrimaryBlue
-import com.evmcstudios.joblerio.ui.theme.TextGray
-import com.evmcstudios.joblerio.ui.theme.TitleDark
+import com.evmcstudios.joblerio.data.*
+import com.evmcstudios.joblerio.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable

@@ -23,15 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,8 +44,7 @@ import coil.compose.AsyncImage
 import com.evmcstudios.joblerio.data.Resume
 import com.evmcstudios.joblerio.data.ResumeManager
 import com.evmcstudios.joblerio.data.ResumeTemplate
-import com.evmcstudios.joblerio.ui.theme.PrimaryBlue
-import com.evmcstudios.joblerio.ui.theme.TitleDark
+import com.evmcstudios.joblerio.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -216,140 +207,15 @@ private suspend fun exportResumeToPdf(context: Context, resume: Resume): File? {
             val document = PdfDocument()
             val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
             val page = document.startPage(pageInfo)
-
             val canvas = page.canvas
             val paint = android.graphics.Paint()
 
             canvas.drawColor(android.graphics.Color.WHITE)
 
-            var yPos = 50f
-
-            canvas.drawText(resume.personalInfo.fullName.ifBlank { "Resume" }, 50f, yPos, paint.apply {
-                this.color = android.graphics.Color.parseColor("#25324B")
-                this.textSize = 20f
-                this.isFakeBoldText = true
-            })
-            yPos += 30f
-
-            val contactInfo = listOfNotNull(
-                resume.personalInfo.email.ifBlank { null },
-                resume.personalInfo.phone.ifBlank { null },
-                resume.personalInfo.location.ifBlank { null }
-            ).joinToString("  |  ")
-            canvas.drawText(contactInfo, 50f, yPos, paint.apply {
-                this.color = android.graphics.Color.parseColor("#7C8493")
-                this.textSize = 10f
-                this.isFakeBoldText = false
-            })
-            yPos += 30f
-
-            canvas.drawLine(50f, yPos, 545f, yPos, paint.apply {
-                this.color = android.graphics.Color.parseColor("#4640DE")
-                this.strokeWidth = 2f
-            })
-            yPos += 25f
-
-            if (resume.summary.isNotBlank()) {
-                canvas.drawText("PROFESSIONAL SUMMARY", 50f, yPos, paint.apply {
-                    this.color = android.graphics.Color.parseColor("#4640DE")
-                    this.textSize = 12f
-                    this.isFakeBoldText = true
-                })
-                yPos += 18f
-                val summaryLines = wrapText(resume.summary, 80)
-                summaryLines.forEach { line ->
-                    canvas.drawText(line, 50f, yPos, paint.apply {
-                        this.color = android.graphics.Color.parseColor("#444444")
-                        this.textSize = 10f
-                        this.isFakeBoldText = false
-                    })
-                    yPos += 14f
-                }
-                yPos += 15f
-            }
-
-            if (resume.experience.isNotEmpty()) {
-                canvas.drawText("EXPERIENCE", 50f, yPos, paint.apply {
-                    this.color = android.graphics.Color.parseColor("#4640DE")
-                    this.textSize = 12f
-                    this.isFakeBoldText = true
-                })
-                yPos += 18f
-
-                resume.experience.forEach { exp ->
-                    canvas.drawText(exp.title, 50f, yPos, paint.apply {
-                        this.color = android.graphics.Color.parseColor("#25324B")
-                        this.textSize = 11f
-                        this.isFakeBoldText = true
-                    })
-                    canvas.drawText("${exp.company}${if (exp.location.isNotBlank()) ", ${exp.location}" else ""}", 50f, yPos + 14f, paint.apply {
-                        this.color = android.graphics.Color.parseColor("#4640DE")
-                        this.textSize = 10f
-                        this.isFakeBoldText = false
-                    })
-                    canvas.drawText("${exp.startDate} - ${if (exp.current) "Present" else exp.endDate}", 400f, yPos, paint.apply {
-                        this.color = android.graphics.Color.parseColor("#7C8493")
-                        this.textSize = 9f
-                    })
-                    yPos += 30f
-                    if (exp.description.isNotBlank()) {
-                        val descLines = wrapText(exp.description, 90)
-                        descLines.take(4).forEach { line ->
-                            canvas.drawText(line, 50f, yPos, paint.apply {
-                                this.color = android.graphics.Color.parseColor("#444444")
-                                this.textSize = 9f
-                            })
-                            yPos += 12f
-                        }
-                    }
-                    yPos += 12f
-                }
-            }
-
-            if (resume.education.isNotEmpty()) {
-                canvas.drawText("EDUCATION", 50f, yPos, paint.apply {
-                    this.color = android.graphics.Color.parseColor("#4640DE")
-                    this.textSize = 12f
-                    this.isFakeBoldText = true
-                })
-                yPos += 18f
-
-                resume.education.forEach { edu ->
-                    canvas.drawText("${edu.degree}${if (edu.field.isNotBlank()) " in ${edu.field}" else ""}", 50f, yPos, paint.apply {
-                        this.color = android.graphics.Color.parseColor("#25324B")
-                        this.textSize = 11f
-                        this.isFakeBoldText = true
-                    })
-                    canvas.drawText(edu.school, 50f, yPos + 14f, paint.apply {
-                        this.color = android.graphics.Color.parseColor("#4640DE")
-                        this.textSize = 10f
-                    })
-                    canvas.drawText("${edu.startDate} - ${edu.endDate}", 400f, yPos, paint.apply {
-                        this.color = android.graphics.Color.parseColor("#7C8493")
-                        this.textSize = 9f
-                    })
-                    yPos += 28f
-                }
-            }
-
-            if (resume.skills.isNotEmpty()) {
-                yPos += 10f
-                canvas.drawText("SKILLS", 50f, yPos, paint.apply {
-                    this.color = android.graphics.Color.parseColor("#4640DE")
-                    this.textSize = 12f
-                    this.isFakeBoldText = true
-                })
-                yPos += 18f
-                val skillsText = resume.skills.joinToString("  |  ")
-                val skillLines = wrapText(skillsText, 100)
-                skillLines.forEach { line ->
-                    canvas.drawText(line, 50f, yPos, paint.apply {
-                        this.color = android.graphics.Color.parseColor("#444444")
-                        this.textSize = 10f
-                        this.isFakeBoldText = false
-                    })
-                    yPos += 14f
-                }
+            when (resume.templateId) {
+                "modern" -> renderModernPdf(canvas, paint, resume)
+                "minimal" -> renderMinimalPdf(canvas, paint, resume)
+                else -> renderProfessionalPdf(canvas, paint, resume)
             }
 
             document.finishPage(page)
@@ -366,6 +232,308 @@ private suspend fun exportResumeToPdf(context: Context, resume: Resume): File? {
             null
         }
     }
+}
+
+private fun renderProfessionalPdf(canvas: android.graphics.Canvas, paint: android.graphics.Paint, resume: Resume) {
+    var yPos = 50f
+
+    canvas.drawText(resume.personalInfo.fullName.ifBlank { "Resume" }, 50f, yPos, paint.apply {
+        this.color = android.graphics.Color.parseColor("#25324B")
+        this.textSize = 20f
+        this.isFakeBoldText = true
+    })
+    yPos += 30f
+
+    val contactInfo = listOfNotNull(
+        resume.personalInfo.email.ifBlank { null },
+        resume.personalInfo.phone.ifBlank { null },
+        resume.personalInfo.location.ifBlank { null }
+    ).joinToString("  |  ")
+    canvas.drawText(contactInfo, 50f, yPos, paint.apply {
+        this.color = android.graphics.Color.parseColor("#7C8493")
+        this.textSize = 10f
+        this.isFakeBoldText = false
+    })
+    yPos += 30f
+
+    canvas.drawLine(50f, yPos, 545f, yPos, paint.apply {
+        this.color = android.graphics.Color.parseColor("#4640DE")
+        this.strokeWidth = 2f
+    })
+    yPos += 25f
+
+    yPos = renderSummary(canvas, paint, resume, yPos)
+    yPos = renderExperience(canvas, paint, resume, yPos)
+    yPos = renderEducation(canvas, paint, resume, yPos)
+    renderSkills(canvas, paint, resume, yPos)
+}
+
+private fun renderModernPdf(canvas: android.graphics.Canvas, paint: android.graphics.Paint, resume: Resume) {
+    canvas.drawRect(0f, 0f, 200f, 842f, paint.apply {
+        this.color = android.graphics.Color.parseColor("#25324B")
+    })
+
+    var yPos = 80f
+    canvas.drawText(resume.personalInfo.fullName.ifBlank { "Resume" }, 20f, yPos, paint.apply {
+        this.color = android.graphics.Color.WHITE
+        this.textSize = 16f
+        this.isFakeBoldText = true
+    })
+    yPos += 25f
+
+    val contacts = listOfNotNull(
+        resume.personalInfo.email.ifBlank { null },
+        resume.personalInfo.phone.ifBlank { null },
+        resume.personalInfo.location.ifBlank { null }
+    )
+    contacts.forEach { contact ->
+        canvas.drawText(contact, 20f, yPos, paint.apply {
+            this.color = android.graphics.Color.WHITE
+            this.textSize = 9f
+            this.isFakeBoldText = false
+        })
+        yPos += 14f
+    }
+
+    if (resume.skills.isNotEmpty()) {
+        yPos += 20f
+        canvas.drawText("SKILLS", 20f, yPos, paint.apply {
+            this.color = android.graphics.Color.parseColor("#4640DE")
+            this.textSize = 11f
+            this.isFakeBoldText = true
+        })
+        yPos += 16f
+        resume.skills.forEach { skill ->
+            canvas.drawText(skill, 20f, yPos, paint.apply {
+                this.color = android.graphics.Color.WHITE
+                this.textSize = 9f
+            })
+            yPos += 12f
+        }
+    }
+
+    if (resume.education.isNotEmpty()) {
+        yPos += 20f
+        canvas.drawText("EDUCATION", 20f, yPos, paint.apply {
+            this.color = android.graphics.Color.parseColor("#4640DE")
+            this.textSize = 11f
+            this.isFakeBoldText = true
+        })
+        yPos += 16f
+        resume.education.forEach { edu ->
+            canvas.drawText(edu.degree, 20f, yPos, paint.apply {
+                this.color = android.graphics.Color.WHITE
+                this.textSize = 9f
+                this.isFakeBoldText = true
+            })
+            yPos += 12f
+            canvas.drawText(edu.school, 20f, yPos, paint.apply {
+                this.color = android.graphics.Color.WHITE.copy(alpha = 0.7f)
+                this.textSize = 8f
+            })
+            yPos += 14f
+        }
+    }
+
+    var rightY = 50f
+    if (resume.summary.isNotBlank()) {
+        canvas.drawText("ABOUT ME", 220f, rightY, paint.apply {
+            this.color = android.graphics.Color.parseColor("#4640DE")
+            this.textSize = 12f
+            this.isFakeBoldText = true
+        })
+        rightY += 18f
+        val summaryLines = wrapText(resume.summary, 75)
+        summaryLines.take(5).forEach { line ->
+            canvas.drawText(line, 220f, rightY, paint.apply {
+                this.color = android.graphics.Color.parseColor("#444444")
+                this.textSize = 9f
+                this.isFakeBoldText = false
+            })
+            rightY += 12f
+        }
+        rightY += 15f
+    }
+
+    if (resume.experience.isNotEmpty()) {
+        canvas.drawText("EXPERIENCE", 220f, rightY, paint.apply {
+            this.color = android.graphics.Color.parseColor("#4640DE")
+            this.textSize = 12f
+            this.isFakeBoldText = true
+        })
+        rightY += 18f
+        resume.experience.forEach { exp ->
+            canvas.drawText(exp.title, 220f, rightY, paint.apply {
+                this.color = android.graphics.Color.parseColor("#25324B")
+                this.textSize = 10f
+                this.isFakeBoldText = true
+            })
+            rightY += 14f
+            canvas.drawText("${exp.company}${if (exp.location.isNotBlank()) ", ${exp.location}" else ""}", 220f, rightY, paint.apply {
+                this.color = android.graphics.Color.parseColor("#4640DE")
+                this.textSize = 9f
+            })
+            canvas.drawText("${exp.startDate} - ${if (exp.current) "Present" else exp.endDate}", 450f, rightY - 14f, paint.apply {
+                this.color = android.graphics.Color.parseColor("#7C8493")
+                this.textSize = 8f
+            })
+            rightY += 14f
+            if (exp.description.isNotBlank()) {
+                val descLines = wrapText(exp.description, 75)
+                descLines.take(3).forEach { line ->
+                    canvas.drawText(line, 220f, rightY, paint.apply {
+                        this.color = android.graphics.Color.parseColor("#444444")
+                        this.textSize = 8f
+                    })
+                    rightY += 11f
+                }
+            }
+            rightY += 10f
+        }
+    }
+}
+
+private fun renderMinimalPdf(canvas: android.graphics.Canvas, paint: android.graphics.Paint, resume: Resume) {
+    var yPos = 60f
+
+    canvas.drawText(resume.personalInfo.fullName.ifBlank { "Resume" }, 50f, yPos, paint.apply {
+        this.color = android.graphics.Color.parseColor("#25324B")
+        this.textSize = 26f
+        this.isFakeBoldText = false
+    })
+    yPos += 35f
+
+    val contactInfo = listOfNotNull(
+        resume.personalInfo.email.ifBlank { null },
+        resume.personalInfo.phone.ifBlank { null },
+        resume.personalInfo.location.ifBlank { null }
+    ).joinToString("  |  ")
+    canvas.drawText(contactInfo, 50f, yPos, paint.apply {
+        this.color = android.graphics.Color.parseColor("#7C8493")
+        this.textSize = 10f
+    })
+    yPos += 40f
+
+    yPos = renderSummary(canvas, paint, resume, yPos, titleSpacing = 1.5f)
+    yPos = renderExperience(canvas, paint, resume, yPos)
+    yPos = renderEducation(canvas, paint, resume, yPos)
+    renderSkills(canvas, paint, resume, yPos, separator = "  |  ")
+}
+
+private fun renderSummary(canvas: android.graphics.Canvas, paint: android.graphics.Paint, resume: Resume, startY: Float, titleSpacing: Float = 0.5f): Float {
+    var yPos = startY
+    if (resume.summary.isNotBlank()) {
+        canvas.drawText("PROFESSIONAL SUMMARY", 50f, yPos, paint.apply {
+            this.color = android.graphics.Color.parseColor("#4640DE")
+            this.textSize = 12f
+            this.isFakeBoldText = true
+        })
+        yPos += 18f
+        val summaryLines = wrapText(resume.summary, 85)
+        summaryLines.forEach { line ->
+            canvas.drawText(line, 50f, yPos, paint.apply {
+                this.color = android.graphics.Color.parseColor("#444444")
+                this.textSize = 10f
+                this.isFakeBoldText = false
+            })
+            yPos += 14f
+        }
+        yPos += 15f
+    }
+    return yPos
+}
+
+private fun renderExperience(canvas: android.graphics.Canvas, paint: android.graphics.Paint, resume: Resume, startY: Float): Float {
+    var yPos = startY
+    if (resume.experience.isNotEmpty()) {
+        canvas.drawText("EXPERIENCE", 50f, yPos, paint.apply {
+            this.color = android.graphics.Color.parseColor("#4640DE")
+            this.textSize = 12f
+            this.isFakeBoldText = true
+        })
+        yPos += 18f
+        resume.experience.forEach { exp ->
+            canvas.drawText(exp.title, 50f, yPos, paint.apply {
+                this.color = android.graphics.Color.parseColor("#25324B")
+                this.textSize = 11f
+                this.isFakeBoldText = true
+            })
+            canvas.drawText("${exp.company}${if (exp.location.isNotBlank()) ", ${exp.location}" else ""}", 50f, yPos + 14f, paint.apply {
+                this.color = android.graphics.Color.parseColor("#4640DE")
+                this.textSize = 10f
+            })
+            canvas.drawText("${exp.startDate} - ${if (exp.current) "Present" else exp.endDate}", 400f, yPos, paint.apply {
+                this.color = android.graphics.Color.parseColor("#7C8493")
+                this.textSize = 9f
+            })
+            yPos += 30f
+            if (exp.description.isNotBlank()) {
+                val descLines = wrapText(exp.description, 90)
+                descLines.take(4).forEach { line ->
+                    canvas.drawText(line, 50f, yPos, paint.apply {
+                        this.color = android.graphics.Color.parseColor("#444444")
+                        this.textSize = 9f
+                    })
+                    yPos += 12f
+                }
+            }
+            yPos += 12f
+        }
+    }
+    return yPos
+}
+
+private fun renderEducation(canvas: android.graphics.Canvas, paint: android.graphics.Paint, resume: Resume, startY: Float): Float {
+    var yPos = startY
+    if (resume.education.isNotEmpty()) {
+        canvas.drawText("EDUCATION", 50f, yPos, paint.apply {
+            this.color = android.graphics.Color.parseColor("#4640DE")
+            this.textSize = 12f
+            this.isFakeBoldText = true
+        })
+        yPos += 18f
+        resume.education.forEach { edu ->
+            canvas.drawText("${edu.degree}${if (edu.field.isNotBlank()) " in ${edu.field}" else ""}", 50f, yPos, paint.apply {
+                this.color = android.graphics.Color.parseColor("#25324B")
+                this.textSize = 11f
+                this.isFakeBoldText = true
+            })
+            canvas.drawText(edu.school, 50f, yPos + 14f, paint.apply {
+                this.color = android.graphics.Color.parseColor("#4640DE")
+                this.textSize = 10f
+            })
+            canvas.drawText("${edu.startDate} - ${edu.endDate}", 400f, yPos, paint.apply {
+                this.color = android.graphics.Color.parseColor("#7C8493")
+                this.textSize = 9f
+            })
+            yPos += 28f
+        }
+    }
+    return yPos
+}
+
+private fun renderSkills(canvas: android.graphics.Canvas, paint: android.graphics.Paint, resume: Resume, startY: Float, separator: String = " • "): Float {
+    var yPos = startY
+    if (resume.skills.isNotEmpty()) {
+        yPos += 10f
+        canvas.drawText("SKILLS", 50f, yPos, paint.apply {
+            this.color = android.graphics.Color.parseColor("#4640DE")
+            this.textSize = 12f
+            this.isFakeBoldText = true
+        })
+        yPos += 18f
+        val skillsText = resume.skills.joinToString(separator)
+        val skillLines = wrapText(skillsText, 100)
+        skillLines.forEach { line ->
+            canvas.drawText(line, 50f, yPos, paint.apply {
+                this.color = android.graphics.Color.parseColor("#444444")
+                this.textSize = 10f
+                this.isFakeBoldText = false
+            })
+            yPos += 14f
+        }
+    }
+    return yPos
 }
 
 private fun sharePdf(context: Context, file: File, name: String) {
