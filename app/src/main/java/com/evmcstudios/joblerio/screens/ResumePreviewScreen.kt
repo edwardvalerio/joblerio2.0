@@ -70,6 +70,7 @@ fun ResumePreviewScreen(
     val resume = remember { ResumeManager.getResume(context, resumeId) }
     val scope = rememberCoroutineScope()
     var isExporting by remember { mutableStateOf(false) }
+    var savedFile by remember { mutableStateOf<File?>(null) }
 
     Column(
         modifier = Modifier
@@ -128,7 +129,7 @@ fun ResumePreviewScreen(
                                 val file = exportResumeToPdf(context, resume)
                                 isExporting = false
                                 if (file != null) {
-                                    Toast.makeText(context, "PDF saved to Downloads", Toast.LENGTH_SHORT).show()
+                                    savedFile = file
                                 }
                             }
                         },
@@ -159,8 +160,53 @@ fun ResumePreviewScreen(
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(40.dp))
             }
         }
+    }
+
+    if (savedFile != null) {
+        AlertDialog(
+            onDismissRequest = { savedFile = null },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(20.dp),
+            title = {
+                Text("PDF Saved", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TitleDark)
+            },
+            text = {
+                Text("Your resume has been saved to Downloads. Would you like to open it now?", fontSize = 14.sp, color = TextGray)
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    savedFile?.let { openPdf(context, it) }
+                    savedFile = null
+                }) {
+                    Text("Open", color = PrimaryBlue, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { savedFile = null }) {
+                    Text("Later", color = TextGray)
+                }
+            }
+        )
+    }
+}
+
+private fun openPdf(context: Context, file: File) {
+    val uri = FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        file
+    )
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, "application/pdf")
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    try {
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        Toast.makeText(context, "No PDF viewer found", Toast.LENGTH_SHORT).show()
     }
 }
 

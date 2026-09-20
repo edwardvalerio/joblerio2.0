@@ -105,7 +105,6 @@ fun MainScreen(
 
     val tabTitles = listOf("Search", "Saved", "Resume", "Profile")
 
-    var state.selectedTabIndex by remember { mutableIntStateOf(0) }
     val state = homeScreenState
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
