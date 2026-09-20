@@ -105,7 +105,7 @@ fun MainScreen(
 
     val tabTitles = listOf("Search", "Saved", "Resume", "Profile")
 
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    var state.selectedTabIndex by remember { mutableIntStateOf(0) }
     val state = homeScreenState
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -181,13 +181,13 @@ fun MainScreen(
                             )
                         }
                         Text(
-                            text = tabTitles[selectedTabIndex],
+                            text = tabTitles[state.selectedTabIndex],
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Spacer(modifier = Modifier.weight(1f))
-                        if (selectedTabIndex == 0) {
+                        if (state.selectedTabIndex == 0) {
                             IconButton(onClick = { showAlertDialog = true }) {
                                 Icon(
                                     imageVector = Icons.Default.Notifications,
@@ -236,9 +236,9 @@ fun MainScreen(
                                     fontSize = 11.sp
                                 )
                             },
-                            selected = selectedTabIndex == index,
+                            selected = state.selectedTabIndex == index,
                             onClick = {
-                                selectedTabIndex = index
+                                state.selectedTabIndex = index
                                 when (index) {
                                     1 -> Analytics.trackScreenView("Saved")
                                     2 -> Analytics.trackScreenView("Profile")
@@ -256,7 +256,7 @@ fun MainScreen(
                 }
             }
         ) { innerPadding ->
-            when (selectedTabIndex) {
+            when (state.selectedTabIndex) {
             0 -> HomeScreen(
                 state = state,
                 userName = userName,

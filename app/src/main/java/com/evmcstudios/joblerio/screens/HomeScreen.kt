@@ -122,6 +122,7 @@ class HomeScreenState(
     var filter by mutableStateOf(FilterState())
         internal set
     var lastSearchedQuery by mutableStateOf("")
+    var selectedTabIndex by mutableIntStateOf(2)
 
     fun saveToPrefs(context: android.content.Context) {
         context.getSharedPreferences("home_state", android.content.Context.MODE_PRIVATE).edit()
