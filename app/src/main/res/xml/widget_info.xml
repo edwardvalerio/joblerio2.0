@@ -8,4 +8,4 @@
     android:widgetCategory="home_screen"
     android:previewLayout="@layout/widget_job_list"
     android:description="@string/widget_description"
-    android:previewImage="@drawable/ic_launcher_foreground" />
+    android:previewImage="@mipmap/ic_launcher" />
