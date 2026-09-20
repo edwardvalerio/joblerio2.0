@@ -26,6 +26,7 @@ import com.evmcstudios.joblerio.screens.ResumeListScreen
 import com.evmcstudios.joblerio.screens.ResumePreviewScreen
 import com.evmcstudios.joblerio.screens.SimpleWebViewScreen
 import com.evmcstudios.joblerio.screens.SplashScreen
+import com.evmcstudios.joblerio.screens.ViewedJobsScreen
 import com.evmcstudios.joblerio.screens.WebViewScreen
 import com.evmcstudios.joblerio.screens.rememberHomeScreenState
 import com.evmcstudios.joblerio.ui.theme.JoblerioTheme
@@ -126,6 +127,9 @@ fun JoblerioApp() {
                 onResumeEdit = { resumeId ->
                     navController.navigate("resume_editor/$resumeId")
                 },
+                onViewedJobs = {
+                    navController.navigate("viewed_jobs")
+                },
                 onLogout = {
                     Analytics.trackLogout()
                     navController.navigate("login") {
@@ -213,6 +217,15 @@ fun JoblerioApp() {
             ResumePreviewScreen(
                 resumeId = resumeId,
                 onBack = { navController.popBackStack() }
+            )
+        }
+        composable("viewed_jobs") {
+            ViewedJobsScreen(
+                onJobClick = { url, title, company, city, state, date, snippet ->
+                    val args = listOf(url, title, company, city, state, date, snippet)
+                        .joinToString("&") { URLEncoder.encode(it, "UTF-8") }
+                    navController.navigate("webview/$args")
+                }
             )
         }
     }

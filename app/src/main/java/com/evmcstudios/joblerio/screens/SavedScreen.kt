@@ -43,6 +43,8 @@ import androidx.compose.ui.unit.sp
 import com.evmcstudios.joblerio.data.Analytics
 import com.evmcstudios.joblerio.data.Job
 import com.evmcstudios.joblerio.data.SavedJobsManager
+import com.evmcstudios.joblerio.data.ViewedJob
+import com.evmcstudios.joblerio.data.ViewedJobsManager
 import com.evmcstudios.joblerio.ui.theme.BackgroundWhite
 import com.evmcstudios.joblerio.ui.theme.CardWhite
 import com.evmcstudios.joblerio.ui.theme.PrimaryBlue
@@ -107,7 +109,15 @@ fun SavedScreen(
                     SavedJobCard(
                         job = job,
                         context = context,
-                        onClick = { onJobClick(job.url, job.title, job.company, job.city, job.state, job.date, job.snippet) },
+                        onClick = {
+                            ViewedJobsManager.addViewedJob(context, ViewedJob(
+                                url = job.url,
+                                title = job.title,
+                                company = job.company,
+                                location = job.location
+                            ))
+                            onJobClick(job.url, job.title, job.company, job.city, job.state, job.date, job.snippet)
+                        },
                         onUnsave = {
                             SavedJobsManager.removeJob(context, job)
                             Analytics.trackJobUnsave(job.title, job.company)

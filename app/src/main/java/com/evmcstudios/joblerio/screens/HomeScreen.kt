@@ -73,6 +73,8 @@ import com.evmcstudios.joblerio.data.Job
 import com.evmcstudios.joblerio.data.JobsApi
 import com.evmcstudios.joblerio.data.PostbackManager
 import com.evmcstudios.joblerio.data.RecentSearchManager
+import com.evmcstudios.joblerio.data.ViewedJob
+import com.evmcstudios.joblerio.data.ViewedJobsManager
 import com.evmcstudios.joblerio.data.ReferrerManager
 import com.evmcstudios.joblerio.data.RemoteConfigManager
 import com.evmcstudios.joblerio.data.SavedJobsManager
@@ -633,6 +635,12 @@ fun HomeScreen(
                     context = context,
                     onClick = {
                         PostbackManager.incrementJobClickCount(context)
+                        ViewedJobsManager.addViewedJob(context, ViewedJob(
+                            url = job.url,
+                            title = job.title,
+                            company = job.company,
+                            location = job.location
+                        ))
                         scope.launch {
                             PostbackManager.checkAndFirePostback(context)
                         }
