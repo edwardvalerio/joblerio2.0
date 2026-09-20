@@ -47,9 +47,8 @@ class JobWidget : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.widget_refresh, refreshPendingIntent)
 
-            // Show initial loading state immediately
-            views.setTextViewText(R.id.widget_loading, "Loading jobs...")
-            views.setViewVisibility(R.id.widget_loading, View.VISIBLE)
+            // Show loading immediately
+            views.setViewVisibility(R.id.widget_progress, View.VISIBLE)
             views.removeAllViews(R.id.widget_content)
             appWidgetManager.updateAppWidget(widgetId, views)
 
@@ -65,6 +64,7 @@ class JobWidget : AppWidgetProvider() {
                         updateViews.setOnClickPendingIntent(R.id.widget_refresh, refreshPendingIntent)
                         
                         updateViews.setViewVisibility(R.id.widget_loading, View.GONE)
+                        updateViews.setViewVisibility(R.id.widget_progress, View.GONE)
                         updateViews.removeAllViews(R.id.widget_content)
 
                         if (searchResult.jobs.isEmpty()) {
@@ -95,6 +95,7 @@ class JobWidget : AppWidgetProvider() {
                         val nv = RemoteViews(context.packageName, R.layout.widget_job_list)
                         nv.setOnClickPendingIntent(R.id.widget_refresh, refreshPendingIntent)
                         nv.setViewVisibility(R.id.widget_loading, View.GONE)
+                        nv.setViewVisibility(R.id.widget_progress, View.GONE)
                         
                         val ev = RemoteViews(context.packageName, R.layout.widget_job_item)
                         ev.setTextViewText(R.id.job_title, "Failed to load jobs")

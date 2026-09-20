@@ -32,6 +32,15 @@
             android:padding="4dp" />
     </LinearLayout>
 
+    <ProgressBar
+        android:id="@+id/widget_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:indeterminate="true"
+        android:visibility="gone"
+        android:indeterminateTint="#4640DE" />
+
     <LinearLayout
         android:id="@+id/widget_content"
         android:layout_width="match_parent"
@@ -42,7 +51,7 @@
             android:id="@+id/widget_loading"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Loading jobs..."
+            android:text=""
             android:textSize="13sp"
             android:textColor="#7C8493"
             android:gravity="center"
