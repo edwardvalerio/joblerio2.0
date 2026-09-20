@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.PullToRefreshBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -60,15 +61,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.evmcstudios.joblerio.R
 import com.evmcstudios.joblerio.data.Analytics
 import com.evmcstudios.joblerio.data.FilterState
 import com.evmcstudios.joblerio.data.Job
 import com.evmcstudios.joblerio.data.JobsApi
 import com.evmcstudios.joblerio.data.PostbackManager
+import com.evmcstudios.joblerio.data.RecentSearchManager
 import com.evmcstudios.joblerio.data.ReferrerManager
 import com.evmcstudios.joblerio.data.RemoteConfigManager
 import com.evmcstudios.joblerio.data.SavedJobsManager
@@ -399,6 +403,7 @@ fun HomeScreen(
                     TextButton(
                         onClick = {
                             Analytics.trackSearch(state.searchQuery, state.locationQuery)
+                            RecentSearchManager.addSearch(context, state.searchQuery, state.locationQuery)
                             if (state.searchQuery != state.lastSearchedQuery) {
                                 state.filter = FilterState()
                                 state.filter.saveToPrefs(context)
@@ -471,6 +476,7 @@ fun HomeScreen(
                     IconButton(
                         onClick = {
                             Analytics.trackSearch(state.searchQuery, state.locationQuery)
+                            RecentSearchManager.addSearch(context, state.searchQuery, state.locationQuery)
                             if (state.searchQuery != state.lastSearchedQuery) {
                                 state.filter = FilterState()
                                 state.filter.saveToPrefs(context)
@@ -498,6 +504,36 @@ fun HomeScreen(
             }
         }
 
+        var isRefreshing by remember { mutableStateOf(false) }
+
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                scope.launch {
+                    isRefreshing = true
+                    state.jobs = emptyList()
+                    state.currentPage = 0
+                    state.hasMore = true
+                    state.isInitialLoadDone = false
+                    val result = JobsApi.searchJobs(
+                        query = state.searchQuery.ifBlank { "jobs" },
+                        location = state.locationQuery.ifBlank { "95054" },
+                        filter = state.filter,
+                        start = 0,
+                        limit = 10
+                    )
+                    result.onSuccess { searchResult ->
+                        state.jobs = searchResult.jobs
+                        state.totalResults = searchResult.totalResults
+                        state.currentPage = 0
+                        state.hasMore = state.jobs.size < searchResult.totalResults
+                    }
+                    state.isLoading = false
+                    state.isInitialLoadDone = true
+                    isRefreshing = false
+                }
+            }
+        ) {
         LazyColumn(
             state = listState,
             modifier = Modifier
@@ -587,11 +623,27 @@ fun HomeScreen(
                             .padding(vertical = 48.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "No jobs found",
-                            fontSize = 16.sp,
-                            color = TextGray
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_empty_jobs),
+                                contentDescription = null,
+                                modifier = Modifier.size(120.dp),
+                                tint = Color.Unspecified
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "No jobs found",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TitleDark
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Try adjusting your search or filters",
+                                fontSize = 14.sp,
+                                color = TextGray
+                            )
+                        }
                     }
                 }
             }
@@ -630,6 +682,7 @@ fun HomeScreen(
             item {
                 Spacer(modifier = Modifier.height(bottomPadding + 16.dp))
             }
+        }
         }
     }
 }

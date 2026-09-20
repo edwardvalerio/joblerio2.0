@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.evmcstudios.joblerio.data.Analytics
 import com.evmcstudios.joblerio.data.PostbackManager
+import com.evmcstudios.joblerio.data.RecentSearchManager
 import com.evmcstudios.joblerio.data.ReferrerManager
 import com.evmcstudios.joblerio.data.SavedJobsManager
 import com.evmcstudios.joblerio.data.UserPrefs
@@ -433,6 +434,55 @@ fun ProfileScreen(topPadding: androidx.compose.ui.unit.Dp = 0.dp, bottomPadding:
         }
 
         Spacer(modifier = Modifier.height(20.dp))
+
+        val recentSearches = remember { RecentSearchManager.getSearches(context) }
+        if (recentSearches.isNotEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = CardWhite),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = "Recent Searches",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TitleDark
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    recentSearches.take(5).forEach { search ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Search,
+                                contentDescription = null,
+                                tint = TextGray,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = search.query,
+                                    fontSize = 14.sp,
+                                    color = TitleDark
+                                )
+                                Text(
+                                    text = search.location.ifBlank { "All locations" },
+                                    fontSize = 12.sp,
+                                    color = TextGray
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+        }
 
         Card(
             modifier = Modifier.fillMaxWidth(),
