@@ -113,6 +113,8 @@ class HomeScreenState(
     internal var hasMore by mutableStateOf(true)
     internal var isInitialLoadDone by mutableStateOf(false)
     internal var hasAttemptedInitialLoad by mutableStateOf(false)
+    var isRefreshing by mutableStateOf(false)
+        internal set
     internal var initialLoadComplete by mutableStateOf(false)
     var scrollIndex by mutableIntStateOf(0)
         internal set
@@ -173,12 +175,14 @@ fun HomeScreen(
         initialFirstVisibleItemScrollOffset = state.scrollOffset
     )
 
-    fun loadJobs(query: String, location: String, loadMore: Boolean = false) {
-        Log.d("HomeScreen", "loadJobs called: query=$query, location=$location, loadMore=$loadMore, jobs=${state.jobs.size}, isLoading=${state.isLoading}")
+    fun loadJobs(query: String, location: String, loadMore: Boolean = false, isRefresh: Boolean = false) {
+        Log.d("HomeScreen", "loadJobs called: query=$query, location=$location, loadMore=$loadMore, isRefresh=$isRefresh, jobs=${state.jobs.size}, isLoading=${state.isLoading}")
         scope.launch {
             try {
                 if (loadMore) {
                     state.isLoadingMore = true
+                } else if (isRefresh) {
+                    state.isRefreshing = true
                 } else {
                     state.isLoading = true
                     state.currentPage = 0
@@ -211,13 +215,14 @@ fun HomeScreen(
                 state.isLoading = false
                 state.isInitialLoadDone = true
                 Log.d("HomeScreen", "loadJobs finished: jobs=${state.jobs.size}, isInitialLoadDone=${state.isInitialLoadDone}")
-                if (loadMore) {
+                if (loadMore || isRefresh) {
                     delay(500)
                 }
             } finally {
                 state.isLoading = false
                 state.isLoadingMore = false
-                Log.d("HomeScreen", "loadJobs finally: isLoading=${state.isLoading}, isLoadingMore=${state.isLoadingMore}")
+                state.isRefreshing = false
+                Log.d("HomeScreen", "loadJobs finally: isLoading=${state.isLoading}, isLoadingMore=${state.isLoadingMore}, isRefreshing=${state.isRefreshing}")
             }
         }
     }
@@ -506,34 +511,10 @@ fun HomeScreen(
         }
 
         val pullRefreshState = rememberPullToRefreshState()
-        if (pullRefreshState.isRefreshing) {
-            LaunchedEffect(true) {
-                state.jobs = emptyList()
-                state.currentPage = 0
-                state.hasMore = true
-                state.isInitialLoadDone = false
-                val result = JobsApi.searchJobs(
-                    query = state.searchQuery.ifBlank { "jobs" },
-                    location = state.locationQuery.ifBlank { "95054" },
-                    filter = state.filter,
-                    start = 0,
-                    limit = 10
-                )
-                result.onSuccess { searchResult ->
-                    state.jobs = searchResult.jobs
-                    state.totalResults = searchResult.totalResults
-                    state.currentPage = 0
-                    state.hasMore = state.jobs.size < searchResult.totalResults
-                }
-                state.isLoading = false
-                state.isInitialLoadDone = true
-                pullRefreshState.endRefresh()
-            }
-        }
 
         PullToRefreshBox(
-            isRefreshing = pullRefreshState.isRefreshing,
-            onRefresh = { pullRefreshState.startRefresh() },
+            isRefreshing = state.isRefreshing,
+            onRefresh = { loadJobs(state.searchQuery, state.locationQuery, isRefresh = true) },
             state = pullRefreshState
         ) {
         LazyColumn(
