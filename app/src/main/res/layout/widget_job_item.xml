@@ -4,10 +4,12 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingVertical="6dp"
-    android:paddingHorizontal="4dp">
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp"
+    android:paddingLeft="4dp"
+    android:paddingRight="4dp">
 
-    <View
+    <FrameLayout
         android:layout_width="8dp"
         android:layout_height="8dp"
         android:background="#4640DE" />
