@@ -9,10 +9,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
@@ -142,11 +145,18 @@ fun AlertSetupDialog(
                     HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Your Alerts",
+                        text = "Your Alerts (${existingAlerts.size})",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = TitleDark
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 200.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
                     Spacer(modifier = Modifier.height(8.dp))
                     existingAlerts.forEach { alert ->
                         Row(
@@ -204,6 +214,7 @@ fun AlertSetupDialog(
                                 )
                             }
                         }
+                    }
                     }
                 }
             }
