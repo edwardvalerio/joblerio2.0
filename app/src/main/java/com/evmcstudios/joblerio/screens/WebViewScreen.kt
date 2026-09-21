@@ -74,11 +74,7 @@ fun WebViewScreen(
     var currentTitle by remember { mutableStateOf(title) }
 
     BackHandler {
-        if (webView?.canGoBack() == true) {
-            webView?.goBack()
-        } else {
-            onBack()
-        }
+        onBack()
     }
 
     Column(
@@ -97,13 +93,7 @@ fun WebViewScreen(
                 )
             },
             navigationIcon = {
-                IconButton(onClick = {
-                    if (webView?.canGoBack() == true) {
-                        webView?.goBack()
-                    } else {
-                        onBack()
-                    }
-                }) {
+                IconButton(onClick = { onBack() }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
