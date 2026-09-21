@@ -1,13 +1,19 @@
 package com.evmcstudios.joblerio
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -31,6 +37,9 @@ import com.evmcstudios.joblerio.screens.ViewedJobsScreen
 import com.evmcstudios.joblerio.screens.WebViewScreen
 import com.evmcstudios.joblerio.screens.rememberHomeScreenState
 import com.evmcstudios.joblerio.ui.theme.JoblerioTheme
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.net.URLDecoder
 import java.net.URLEncoder
@@ -39,6 +48,34 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val packageInfo = try {
+            packageManager.getPackageInfo(packageName, 0)
+        } catch (_: Exception) { null }
+        val currentVersion = packageInfo?.let {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) it.longVersionCode.toInt() else @Suppress("DEPRECATION") it.versionCode
+        } ?: 1
+        val lastUpdateTime = packageInfo?.lastUpdateTime ?: 0L
+        val firstInstallTime = packageInfo?.firstInstallTime ?: 0L
+
+        Log.d("MainActivity", "Package info: version=$currentVersion, lastUpdate=$lastUpdateTime, firstInstall=$firstInstallTime")
+
+        val clearedVersion = UserPrefs.checkAndClearOnVersionUpgrade(this, currentVersion)
+        val clearedReinstall = UserPrefs.checkAndClearOnReinstall(this, lastUpdateTime, firstInstallTime)
+        if (clearedVersion || clearedReinstall) {
+            Log.d("MainActivity", "Stale data cleared: version=$clearedVersion, reinstall=$clearedReinstall")
+            try {
+                val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build()
+                GoogleSignIn.getClient(this, gso).signOut()
+                FirebaseAuth.getInstance().signOut()
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Sign-out failed: ${e.message}")
+            }
+        }
+
         Analytics.init()
         NotificationHelper.createNotificationChannel(this)
         NotificationHelper.scheduleReEngagementCheck(this)
@@ -80,6 +117,23 @@ fun JoblerioApp() {
     val userName = UserPrefs.getUserName(context)
     val startDest = if (UserPrefs.isLoggedIn(context)) "main" else "splash"
     val homeScreenState = rememberHomeScreenState()
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        Log.d("MainActivity", "Notification permission result: granted=$granted")
+    }
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!hasPermission) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
 
     NavHost(navController = navController, startDestination = startDest) {
         navController.addOnDestinationChangedListener { _, destination, _ ->

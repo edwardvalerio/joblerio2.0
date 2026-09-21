@@ -1,6 +1,13 @@
 package com.evmcstudios.joblerio.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,6 +68,53 @@ fun AlertSetupDialog(
     var location by remember { mutableStateOf(currentLocation) }
     var frequency by remember { mutableStateOf("daily") }
     var existingAlerts by remember { mutableStateOf(AlertManager.getAlerts(context)) }
+    var pendingSave by remember { mutableStateOf(false) }
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        Log.d("AlertSetupDialog", "Notification permission result: granted=$granted")
+        if (pendingSave) {
+            pendingSave = false
+            AlertManager.saveAlert(
+                context,
+                JobAlert(
+                    query = query,
+                    location = location,
+                    frequency = frequency
+                )
+            )
+            com.evmcstudios.joblerio.NotificationHelper.createNotificationChannel(context)
+            com.evmcstudios.joblerio.NotificationHelper.schedulePeriodicCheck(context)
+            existingAlerts = AlertManager.getAlerts(context)
+            onDismiss()
+        }
+    }
+
+    fun saveAlertAndRequestPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!hasPermission) {
+                pendingSave = true
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                return
+            }
+        }
+        AlertManager.saveAlert(
+            context,
+            JobAlert(
+                query = query,
+                location = location,
+                frequency = frequency
+            )
+        )
+        com.evmcstudios.joblerio.NotificationHelper.createNotificationChannel(context)
+        com.evmcstudios.joblerio.NotificationHelper.schedulePeriodicCheck(context)
+        existingAlerts = AlertManager.getAlerts(context)
+        onDismiss()
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -227,19 +281,8 @@ fun AlertSetupDialog(
             TextButton(
                 onClick = {
                     if (query.isNotBlank()) {
-                        AlertManager.saveAlert(
-                            context,
-                            JobAlert(
-                                query = query,
-                                location = location,
-                                frequency = frequency
-                            )
-                        )
-                        com.evmcstudios.joblerio.NotificationHelper.createNotificationChannel(context)
-                        com.evmcstudios.joblerio.NotificationHelper.schedulePeriodicCheck(context)
-                        existingAlerts = AlertManager.getAlerts(context)
+                        saveAlertAndRequestPermission()
                     }
-                    onDismiss()
                 }
             ) {
                 Text("Save Alert", color = PrimaryBlue, fontWeight = FontWeight.SemiBold)

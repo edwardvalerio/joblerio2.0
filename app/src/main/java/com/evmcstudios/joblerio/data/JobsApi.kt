@@ -33,9 +33,8 @@ data class LocationResult(
 
 object JobsApi {
 
-    private const val BASE_URL = "https://api.l5srv.net/job_search/api/web/find_jobs.srv"
-    private const val CID = "4183"
-    private const val CHID = "app"
+    private const val BASE_URL = "https://jobs.loyalnuggets.com/api/v1/jobs"
+    private const val API_KEY = "lj_944ef823727b1daf53ec4011c195aee9dc08e9178c856940"
     private const val PAGE_SIZE = 10
     private const val TEST_MODE = true
     private const val TEST_URL = "https://evmcstudios.com/"
@@ -143,10 +142,7 @@ object JobsApi {
             val encodedLocation = URLEncoder.encode(location.ifBlank { "95054" }, "UTF-8")
 
             var url = "$BASE_URL" +
-                "?CID=$CID" +
-                "&CHID=$CHID" +
-                "&format=JSON2" +
-                "&q=$encodedQuery" +
+                "?q=$encodedQuery" +
                 "&l=$encodedLocation" +
                 "&r=${filter.radius}" +
                 "&s=${filter.sortBy}" +
@@ -163,6 +159,7 @@ object JobsApi {
             val request = Request.Builder()
                 .url(url)
                 .header("Accept", "application/json")
+                .header("X-API-Key", API_KEY)
                 .build()
 
             val response = client.newCall(request).execute()
