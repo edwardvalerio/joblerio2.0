@@ -73,14 +73,17 @@ fun WebViewScreen(
     var webView by remember { mutableStateOf<WebView?>(null) }
     var progress by remember { mutableFloatStateOf(0f) }
     var currentTitle by remember { mutableStateOf(title) }
+    var lastBackTime by remember { mutableStateOf(0L) }
 
     BackHandler {
-        Log.d("WebView", "BackHandler: canGoBack=${webView?.canGoBack()}")
-        if (webView?.canGoBack() == true) {
-            webView?.goBack()
-        } else {
-            Log.d("WebView", "Calling onBack()")
-            onBack()
+        val now = System.currentTimeMillis()
+        if (now - lastBackTime > 500) {
+            lastBackTime = now
+            if (webView?.canGoBack() == true) {
+                webView?.goBack()
+            } else {
+                onBack()
+            }
         }
     }
 
@@ -101,10 +104,14 @@ fun WebViewScreen(
             },
             navigationIcon = {
                 IconButton(onClick = {
-                    if (webView?.canGoBack() == true) {
-                        webView?.goBack()
-                    } else {
-                        onBack()
+                    val now = System.currentTimeMillis()
+                    if (now - lastBackTime > 500) {
+                        lastBackTime = now
+                        if (webView?.canGoBack() == true) {
+                            webView?.goBack()
+                        } else {
+                            onBack()
+                        }
                     }
                 }) {
                     Icon(
@@ -129,7 +136,13 @@ fun WebViewScreen(
                         tint = if (isSaved) PrimaryBlue else TitleDark
                     )
                 }
-                IconButton(onClick = { onBack() }) {
+                IconButton(onClick = {
+                    val now = System.currentTimeMillis()
+                    if (now - lastBackTime > 500) {
+                        lastBackTime = now
+                        onBack()
+                    }
+                }) {
                     Icon(
                         imageVector = Icons.Filled.Close,
                         contentDescription = "Close",
