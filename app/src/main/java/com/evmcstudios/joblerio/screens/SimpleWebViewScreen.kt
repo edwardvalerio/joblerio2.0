@@ -45,12 +45,17 @@ fun SimpleWebViewScreen(
     var webView by remember { mutableStateOf<WebView?>(null) }
     var progress by remember { mutableFloatStateOf(0f) }
     var currentTitle by remember { mutableStateOf(title) }
+    var lastBackTime by remember { mutableStateOf(0L) }
 
     BackHandler {
-        if (webView?.canGoBack() == true) {
-            webView?.goBack()
-        } else {
-            onBack()
+        val now = System.currentTimeMillis()
+        if (now - lastBackTime > 500) {
+            lastBackTime = now
+            if (webView?.canGoBack() == true) {
+                webView?.goBack()
+            } else {
+                onBack()
+            }
         }
     }
 
@@ -71,10 +76,14 @@ fun SimpleWebViewScreen(
             },
             navigationIcon = {
                 IconButton(onClick = {
-                    if (webView?.canGoBack() == true) {
-                        webView?.goBack()
-                    } else {
-                        onBack()
+                    val now = System.currentTimeMillis()
+                    if (now - lastBackTime > 500) {
+                        lastBackTime = now
+                        if (webView?.canGoBack() == true) {
+                            webView?.goBack()
+                        } else {
+                            onBack()
+                        }
                     }
                 }) {
                     Icon(
