@@ -82,7 +82,11 @@ fun JoblerioApp() {
     val homeScreenState = rememberHomeScreenState()
 
     NavHost(navController = navController, startDestination = startDest) {
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            Log.d("Navigation", "Navigated to: ${destination.route}")
+        }
         composable("splash") {
+            Log.d("Navigation", "Screen: splash")
             LaunchedEffect(Unit) { Analytics.trackScreenView("Splash") }
             SplashScreen(
                 onSplashFinished = {
@@ -99,6 +103,7 @@ fun JoblerioApp() {
             )
         }
         composable("login") {
+            Log.d("Navigation", "Screen: login")
             LaunchedEffect(Unit) { Analytics.trackScreenView("Login") }
             LoginScreen(
                 onLoginSuccess = { name ->
@@ -116,6 +121,7 @@ fun JoblerioApp() {
             )
         }
         composable("main") {
+            Log.d("Navigation", "Screen: main")
             LaunchedEffect(Unit) { Analytics.trackScreenView("Main") }
             val name = UserPrefs.getUserName(context)
             MainScreen(
@@ -152,6 +158,7 @@ fun JoblerioApp() {
                 navArgument("args") { type = NavType.StringType }
             )
         ) { backStackEntry ->
+            Log.d("Navigation", "Screen: webview")
             LaunchedEffect(Unit) { Analytics.trackScreenView("Job Detail") }
             val decoded = URLDecoder.decode(backStackEntry.arguments?.getString("args") ?: "", "UTF-8")
             val parts = decoded.split("&")
@@ -182,6 +189,7 @@ fun JoblerioApp() {
                 navArgument("title") { type = NavType.StringType }
             )
         ) { backStackEntry ->
+            Log.d("Navigation", "Screen: simple_webview")
             val url = URLDecoder.decode(backStackEntry.arguments?.getString("url") ?: "", "UTF-8")
             val title = URLDecoder.decode(backStackEntry.arguments?.getString("title") ?: "", "UTF-8")
             SimpleWebViewScreen(
@@ -191,6 +199,7 @@ fun JoblerioApp() {
             )
         }
         composable("resume_list") {
+            Log.d("Navigation", "Screen: resume_list")
             ResumeListScreen(
                 onResumeClick = { resumeId ->
                     navController.navigate("resume_editor/$resumeId")
@@ -206,6 +215,7 @@ fun JoblerioApp() {
                 navArgument("resumeId") { type = NavType.StringType }
             )
         ) { backStackEntry ->
+            Log.d("Navigation", "Screen: resume_editor")
             val resumeId = backStackEntry.arguments?.getString("resumeId") ?: "new"
             ResumeEditorScreen(
                 resumeId = if (resumeId == "new") null else resumeId,
@@ -221,6 +231,7 @@ fun JoblerioApp() {
                 navArgument("resumeId") { type = NavType.StringType }
             )
         ) { backStackEntry ->
+            Log.d("Navigation", "Screen: resume_preview")
             val resumeId = backStackEntry.arguments?.getString("resumeId") ?: ""
             ResumePreviewScreen(
                 resumeId = resumeId,
@@ -228,6 +239,7 @@ fun JoblerioApp() {
             )
         }
         composable("viewed_jobs") {
+            Log.d("Navigation", "Screen: viewed_jobs")
             ViewedJobsScreen(
                 onBack = { navController.popBackStack() },
                 onJobClick = { url, title, company, city, state, date, snippet ->

@@ -1,6 +1,7 @@
 package com.evmcstudios.joblerio.screens
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.view.ViewGroup
 import android.webkit.WebChromeClient
 import android.webkit.WebView
@@ -74,7 +75,13 @@ fun WebViewScreen(
     var currentTitle by remember { mutableStateOf(title) }
 
     BackHandler {
-        onBack()
+        Log.d("WebView", "BackHandler: canGoBack=${webView?.canGoBack()}")
+        if (webView?.canGoBack() == true) {
+            webView?.goBack()
+        } else {
+            Log.d("WebView", "Calling onBack()")
+            onBack()
+        }
     }
 
     Column(
@@ -93,7 +100,13 @@ fun WebViewScreen(
                 )
             },
             navigationIcon = {
-                IconButton(onClick = { onBack() }) {
+                IconButton(onClick = {
+                    if (webView?.canGoBack() == true) {
+                        webView?.goBack()
+                    } else {
+                        onBack()
+                    }
+                }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
