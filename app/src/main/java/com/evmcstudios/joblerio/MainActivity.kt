@@ -16,6 +16,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.evmcstudios.joblerio.data.Analytics
 import com.evmcstudios.joblerio.data.PostbackManager
+import com.evmcstudios.joblerio.data.ReEngagementManager
 import com.evmcstudios.joblerio.data.ReferrerManager
 import com.evmcstudios.joblerio.data.RemoteConfigManager
 import com.evmcstudios.joblerio.data.UserPrefs
@@ -40,6 +41,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         Analytics.init()
         NotificationHelper.createNotificationChannel(this)
+        NotificationHelper.scheduleReEngagementCheck(this)
+        ReEngagementManager.updateLastActive(this)
 
         lifecycleScope.launch {
             try {
@@ -62,6 +65,11 @@ class MainActivity : ComponentActivity() {
                 JoblerioApp()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        ReEngagementManager.updateLastActive(this)
     }
 }
 

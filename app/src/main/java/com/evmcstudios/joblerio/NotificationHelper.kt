@@ -63,6 +63,18 @@ object NotificationHelper {
     fun cancelPeriodicCheck(context: Context) {
         WorkManager.getInstance(context).cancelUniqueWork("job_alert_check")
     }
+
+    fun scheduleReEngagementCheck(context: Context) {
+        val workRequest = PeriodicWorkRequestBuilder<ReEngagementWorker>(
+            30, TimeUnit.MINUTES
+        ).build()
+
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "reengagement_check",
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
+    }
 }
 
 class JobAlertWorker(

@@ -24,6 +24,7 @@ object RemoteConfigManager {
                 "payout": "0",
                 "postback_event": "install",
                 "postback_job_clicks_threshold": 2,
+                "reengagement_enabled": true,
                 "keyword_mapping": {
                     "US": "jobs",
                     "CA": "emploi",
@@ -94,5 +95,9 @@ object RemoteConfigManager {
             CountryMapper.countryMap.entries.find { it.value.equals(country, ignoreCase = true) }?.key ?: ""
         }
         return mapping.get(countryCode)?.asString ?: "Jobs"
+    }
+
+    fun isReEngagementEnabled(): Boolean {
+        return config?.get("reengagement_enabled")?.asBoolean ?: true
     }
 }
