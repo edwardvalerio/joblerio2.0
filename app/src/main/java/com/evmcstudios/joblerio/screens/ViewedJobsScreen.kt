@@ -114,6 +114,7 @@ fun ViewedJobsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp)
+                    .padding(bottom = 60.dp)
             ) {
                 item {
                     Spacer(modifier = Modifier.height(12.dp))
