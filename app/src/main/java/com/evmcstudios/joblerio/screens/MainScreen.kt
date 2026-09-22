@@ -77,6 +77,7 @@ import com.evmcstudios.joblerio.ui.theme.CardWhite
 import com.evmcstudios.joblerio.ui.theme.PrimaryBlue
 import com.evmcstudios.joblerio.ui.theme.TextGray
 import com.evmcstudios.joblerio.ui.theme.TitleDark
+import com.evmcstudios.joblerio.data.AdManager
 import kotlinx.coroutines.launch
 
 data class BottomNavItem(
@@ -226,41 +227,44 @@ fun MainScreen(
                 }
             },
             bottomBar = {
-                NavigationBar(
-                    containerColor = CardWhite,
-                    tonalElevation = 8.dp
-                ) {
-                    bottomNavItems.forEachIndexed { index, item ->
-                        NavigationBarItem(
-                            icon = {
-                                Icon(
-                                    imageVector = item.icon,
-                                    contentDescription = item.title,
-                                    modifier = Modifier.size(24.dp)
+                Column {
+                    AdManager.BannerAd()
+                    NavigationBar(
+                        containerColor = CardWhite,
+                        tonalElevation = 8.dp
+                    ) {
+                        bottomNavItems.forEachIndexed { index, item ->
+                            NavigationBarItem(
+                                icon = {
+                                    Icon(
+                                        imageVector = item.icon,
+                                        contentDescription = item.title,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = item.title,
+                                        fontSize = 11.sp
+                                    )
+                                },
+                                selected = state.selectedTabIndex == index,
+                                onClick = {
+                                    state.selectedTabIndex = index
+                                    when (index) {
+                                        1 -> Analytics.trackScreenView("Saved")
+                                        2 -> Analytics.trackScreenView("Profile")
+                                    }
+                                },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = PrimaryBlue,
+                                    selectedTextColor = PrimaryBlue,
+                                    unselectedIconColor = TextGray,
+                                    unselectedTextColor = TextGray,
+                                    indicatorColor = PrimaryBlue.copy(alpha = 0.1f)
                                 )
-                            },
-                            label = {
-                                Text(
-                                    text = item.title,
-                                    fontSize = 11.sp
-                                )
-                            },
-                            selected = state.selectedTabIndex == index,
-                            onClick = {
-                                state.selectedTabIndex = index
-                                when (index) {
-                                    1 -> Analytics.trackScreenView("Saved")
-                                    2 -> Analytics.trackScreenView("Profile")
-                                }
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = PrimaryBlue,
-                                selectedTextColor = PrimaryBlue,
-                                unselectedIconColor = TextGray,
-                                unselectedTextColor = TextGray,
-                                indicatorColor = PrimaryBlue.copy(alpha = 0.1f)
                             )
-                        )
+                        }
                     }
                 }
             }

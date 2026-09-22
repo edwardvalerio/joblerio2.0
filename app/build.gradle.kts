@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.install.referrer)
     implementation(libs.firebase.config)
     implementation(libs.work.runtime)
+    implementation(libs.play.services.ads)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

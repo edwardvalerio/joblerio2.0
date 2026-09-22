@@ -84,6 +84,7 @@ import com.evmcstudios.joblerio.ui.theme.PrimaryBlue
 import com.evmcstudios.joblerio.ui.theme.SearchBarBg
 import com.evmcstudios.joblerio.ui.theme.TextGray
 import com.evmcstudios.joblerio.ui.theme.TitleDark
+import com.evmcstudios.joblerio.data.AdManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -648,6 +649,13 @@ fun HomeScreen(
                     }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
+
+                if ((state.jobs.indexOf(job) + 1) % 5 == 0 && state.jobs.indexOf(job) < state.jobs.size - 1) {
+                    AdManager.NativeAdCard(
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
 
             if (state.isLoadingMore) {

@@ -20,6 +20,7 @@ coil = "2.7.0"
 installReferrer = "1.1.1"
 firebaseConfig = "22.1.0"
 workManager = "2.10.1"
+ads = "24.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -50,6 +51,7 @@ coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coi
 install-referrer = { group = "com.android.installreferrer", name = "installreferrer", version.ref = "installReferrer" }
 firebase-config = { group = "com.google.firebase", name = "firebase-config-ktx", version.ref = "firebaseConfig" }
 work-runtime = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
+play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "ads" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

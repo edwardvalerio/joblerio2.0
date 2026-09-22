@@ -21,6 +21,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.evmcstudios.joblerio.data.Analytics
+import com.evmcstudios.joblerio.data.AdManager
 import com.evmcstudios.joblerio.data.PostbackManager
 import com.evmcstudios.joblerio.data.ReEngagementManager
 import com.evmcstudios.joblerio.data.ReferrerManager
@@ -77,6 +78,7 @@ class MainActivity : ComponentActivity() {
         }
 
         Analytics.init()
+        AdManager.initialize(this)
         NotificationHelper.createNotificationChannel(this)
         NotificationHelper.scheduleReEngagementCheck(this)
         ReEngagementManager.updateLastActive(this)
