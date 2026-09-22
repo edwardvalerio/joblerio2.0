@@ -4,9 +4,8 @@ plugins {
     alias(libs.plugins.google.services)
 }
 
+import java.io.File
 import java.time.LocalDate
-import java.time.LocalTime
-import java.time.temporal.ChronoUnit
 
 android {
     namespace = "com.evmcstudios.joblerio"
@@ -19,13 +18,13 @@ android {
         minSdk = 24
         targetSdk = 37
 
-        val epoch = LocalDate.of(2025, 1, 1)
         val today = LocalDate.now()
-        val now = LocalTime.now()
-        val daysSince = ChronoUnit.DAYS.between(epoch, today).toInt()
-        val totalSeconds = now.hour * 3600 + now.minute * 60 + now.second
-        versionCode = daysSince * 86400 + totalSeconds
-        versionName = "1.0.${today.year % 100}${today.monthValue.toString().padStart(2, '0')}${today.dayOfMonth.toString().padStart(2, '0')}.${now.hour.toString().padStart(2, '0')}${now.minute.toString().padStart(2, '0')}${now.second.toString().padStart(2, '0')}"
+        val versionFile = File(projectDir, ".version_counter")
+        val currentCount = if (versionFile.exists()) versionFile.readText().trim().toIntOrNull() ?: 0 else 0
+        val newCount = currentCount + 1
+        versionFile.writeText(newCount.toString())
+        versionCode = newCount
+        versionName = "1.0.${today.year % 100}${today.monthValue.toString().padStart(2, '0')}${today.dayOfMonth.toString().padStart(2, '0')}.$newCount"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
