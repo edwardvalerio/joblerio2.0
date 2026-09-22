@@ -5,6 +5,7 @@ plugins {
 }
 
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 
 android {
@@ -20,9 +21,11 @@ android {
 
         val epoch = LocalDate.of(2025, 1, 1)
         val today = LocalDate.now()
+        val now = LocalTime.now()
         val daysSince = ChronoUnit.DAYS.between(epoch, today).toInt()
-        versionCode = daysSince
-        versionName = "1.0.${today.year % 100}${today.monthValue.toString().padStart(2, '0')}${today.dayOfMonth.toString().padStart(2, '0')}"
+        val minuteOfDay = now.hour * 60 + now.minute
+        versionCode = daysSince * 1440 + minuteOfDay
+        versionName = "1.0.${today.year % 100}${today.monthValue.toString().padStart(2, '0')}${today.dayOfMonth.toString().padStart(2, '0')}.${now.hour.toString().padStart(2, '0')}${now.minute.toString().padStart(2, '0')}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
