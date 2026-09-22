@@ -23,9 +23,9 @@ android {
         val today = LocalDate.now()
         val now = LocalTime.now()
         val daysSince = ChronoUnit.DAYS.between(epoch, today).toInt()
-        val minuteOfDay = now.hour * 60 + now.minute
-        versionCode = daysSince * 1440 + minuteOfDay
-        versionName = "1.0.${today.year % 100}${today.monthValue.toString().padStart(2, '0')}${today.dayOfMonth.toString().padStart(2, '0')}.${now.hour.toString().padStart(2, '0')}${now.minute.toString().padStart(2, '0')}"
+        val totalSeconds = now.hour * 3600 + now.minute * 60 + now.second
+        versionCode = daysSince * 86400 + totalSeconds
+        versionName = "1.0.${today.year % 100}${today.monthValue.toString().padStart(2, '0')}${today.dayOfMonth.toString().padStart(2, '0')}.${now.hour.toString().padStart(2, '0')}${now.minute.toString().padStart(2, '0')}${now.second.toString().padStart(2, '0')}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

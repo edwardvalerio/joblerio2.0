@@ -528,32 +528,33 @@ fun ProfileScreen(topPadding: androidx.compose.ui.unit.Dp = 0.dp, bottomPadding:
             Spacer(modifier = Modifier.height(20.dp))
         }
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = CardWhite),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Text(
-                    text = "Referrer Info",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TitleDark
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                ReferrerRow("Click ID", clickId.ifBlank { "N/A" })
-                ReferrerRow("Country", country.ifBlank { "N/A" })
-                ReferrerRow("Campaign", campaign.ifBlank { "N/A" })
-                ReferrerRow("Keyword", keyword.ifBlank { "N/A" })
-                Spacer(modifier = Modifier.height(8.dp))
-                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
-                Spacer(modifier = Modifier.height(8.dp))
-                ReferrerRow("Postback Fired", if (postbackFired) "Yes" else "No")
-                ReferrerRow("Job Clicks", jobClickCount.toString())
-                ReferrerRow("Raw Referrer", rawReferrer.ifBlank { "N/A" })
-            }
-        }
+        //Referrer Info card hidden for production
+        //Card(
+        //    modifier = Modifier.fillMaxWidth(),
+        //    shape = RoundedCornerShape(16.dp),
+        //    colors = CardDefaults.cardColors(containerColor = CardWhite),
+        //    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        //) {
+        //    Column(modifier = Modifier.padding(20.dp)) {
+        //        Text(
+        //            text = "Referrer Info",
+        //            fontSize = 16.sp,
+        //            fontWeight = FontWeight.SemiBold,
+        //            color = TitleDark
+        //        )
+        //        Spacer(modifier = Modifier.height(12.dp))
+        //        ReferrerRow("Click ID", clickId.ifBlank { "N/A" })
+        //        ReferrerRow("Country", country.ifBlank { "N/A" })
+        //        ReferrerRow("Campaign", campaign.ifBlank { "N/A" })
+        //        ReferrerRow("Keyword", keyword.ifBlank { "N/A" })
+        //        Spacer(modifier = Modifier.height(8.dp))
+        //        HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+        //        Spacer(modifier = Modifier.height(8.dp))
+        //        ReferrerRow("Postback Fired", if (postbackFired) "Yes" else "No")
+        //        ReferrerRow("Job Clicks", jobClickCount.toString())
+        //        ReferrerRow("Raw Referrer", rawReferrer.ifBlank { "N/A" })
+        //    }
+        //}
 
         Spacer(modifier = Modifier.height(24.dp))
 
