@@ -34,8 +34,6 @@ data class LocationResult(
 object JobsApi {
 
     private const val PAGE_SIZE = 10
-    private const val TEST_MODE = true
-    private const val TEST_URL = "https://evmcstudios.com/"
 
     internal val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -182,8 +180,7 @@ object JobsApi {
             val jobAdapter = JobAdapter()
             val jobs = resultsArray.mapNotNull { element ->
                 try {
-                    val job = jobAdapter.read(com.google.gson.stream.JsonReader(java.io.StringReader(element.toString())))
-                    if (TEST_MODE) job.copy(url = TEST_URL) else job
+                    jobAdapter.read(com.google.gson.stream.JsonReader(java.io.StringReader(element.toString())))
                 } catch (e: Exception) {
                     null
                 }
