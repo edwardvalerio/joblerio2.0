@@ -20,9 +20,9 @@ object RemoteConfigManager {
         CONFIG_KEY to """
             {
                 "jobs_api_url": "https://jobs.loyalnuggets.com/api/v1/jobs",
-                "jobs_api_key": "lj_944ef823727b1daf53ec4011c195aee9dc08e9178c856940",
+                "jobs_api_key": "",
                 "postback_url": "https://lntrk.lnuggetstrk.com/postback",
-                "postback_key": "some-random-string",
+                "postback_key": "",
                 "payout": "0",
                 "postback_event": "install",
                 "postback_job_clicks_threshold": 2,
@@ -47,7 +47,7 @@ object RemoteConfigManager {
         try {
             val rc = Firebase.remoteConfig
             val settings = remoteConfigSettings {
-                minimumFetchIntervalInSeconds = 0
+                minimumFetchIntervalInSeconds = 3600
             }
             rc.setConfigSettingsAsync(settings).await()
             rc.setDefaultsAsync(defaults).await()
@@ -75,8 +75,7 @@ object RemoteConfigManager {
     }
 
     fun getPostbackKey(): String {
-        return config?.get("postback_key")?.asString
-            ?: "some-random-string"
+        return config?.get("postback_key")?.asString ?: ""
     }
 
     fun getPayout(): String {
@@ -109,7 +108,6 @@ object RemoteConfigManager {
     }
 
     fun getJobsApiKey(): String {
-        return config?.get("jobs_api_key")?.asString
-            ?: "lj_944ef823727b1daf53ec4011c195aee9dc08e9178c856940"
+        return config?.get("jobs_api_key")?.asString ?: ""
     }
 }
