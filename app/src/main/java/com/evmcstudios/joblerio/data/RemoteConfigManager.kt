@@ -19,6 +19,8 @@ object RemoteConfigManager {
     private val defaults = mapOf(
         CONFIG_KEY to """
             {
+                "jobs_api_url": "https://jobs.loyalnuggets.com/api/v1/jobs",
+                "jobs_api_key": "lj_944ef823727b1daf53ec4011c195aee9dc08e9178c856940",
                 "postback_url": "https://lntrk.lnuggetstrk.com/postback",
                 "postback_key": "some-random-string",
                 "payout": "0",
@@ -99,5 +101,15 @@ object RemoteConfigManager {
 
     fun isReEngagementEnabled(): Boolean {
         return config?.get("reengagement_enabled")?.asBoolean ?: true
+    }
+
+    fun getJobsApiUrl(): String {
+        return config?.get("jobs_api_url")?.asString
+            ?: "https://jobs.loyalnuggets.com/api/v1/jobs"
+    }
+
+    fun getJobsApiKey(): String {
+        return config?.get("jobs_api_key")?.asString
+            ?: "lj_944ef823727b1daf53ec4011c195aee9dc08e9178c856940"
     }
 }

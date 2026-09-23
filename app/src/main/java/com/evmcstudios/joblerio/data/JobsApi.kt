@@ -33,8 +33,6 @@ data class LocationResult(
 
 object JobsApi {
 
-    private const val BASE_URL = "https://jobs.loyalnuggets.com/api/v1/jobs"
-    private const val API_KEY = "lj_944ef823727b1daf53ec4011c195aee9dc08e9178c856940"
     private const val PAGE_SIZE = 10
     private const val TEST_MODE = true
     private const val TEST_URL = "https://evmcstudios.com/"
@@ -141,7 +139,10 @@ object JobsApi {
             val encodedQuery = URLEncoder.encode(query.ifBlank { "jobs" }, "UTF-8")
             val encodedLocation = URLEncoder.encode(location.ifBlank { "95054" }, "UTF-8")
 
-            var url = "$BASE_URL" +
+            val baseUrl = RemoteConfigManager.getJobsApiUrl()
+            val apiKey = RemoteConfigManager.getJobsApiKey()
+
+            var url = "$baseUrl" +
                 "?q=$encodedQuery" +
                 "&l=$encodedLocation" +
                 "&r=${filter.radius}" +
@@ -159,7 +160,7 @@ object JobsApi {
             val request = Request.Builder()
                 .url(url)
                 .header("Accept", "application/json")
-                .header("X-API-Key", API_KEY)
+                .header("X-API-Key", apiKey)
                 .build()
 
             val response = client.newCall(request).execute()
