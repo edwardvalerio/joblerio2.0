@@ -1,20 +1,31 @@
 package com.evmcstudios.joblerio.data
 
 import android.os.Bundle
+import android.util.Log
+import com.evmcstudios.joblerio.JoblerioApplication
 import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.analytics.ktx.analytics
-import com.google.firebase.ktx.Firebase
 
 object Analytics {
+
+    private const val TAG = "Analytics"
 
     private var firebaseAnalytics: FirebaseAnalytics? = null
 
     fun init() {
-        firebaseAnalytics = Firebase.analytics
+        firebaseAnalytics = try {
+            JoblerioApplication.analyticsOrNull()
+        } catch (e: Exception) {
+            Log.e(TAG, "Analytics init failed: ${e.message}")
+            null
+        }
     }
 
     fun logEvent(name: String, params: Bundle? = null) {
-        firebaseAnalytics?.logEvent(name, params)
+        try {
+            firebaseAnalytics?.logEvent(name, params)
+        } catch (e: Exception) {
+            Log.e(TAG, "logEvent failed: ${e.message}")
+        }
     }
 
     fun trackScreenView(screenName: String) {

@@ -11,3 +11,6 @@ local.properties
 app/google-services.json
 app/release/
 app/.version_counter
+keystore.properties
+*.jks
+*.keystore

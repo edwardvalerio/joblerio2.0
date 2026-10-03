@@ -45,7 +45,13 @@ object RemoteConfigManager {
 
     suspend fun init() {
         try {
-            val rc = Firebase.remoteConfig
+            val rc = try {
+                Firebase.remoteConfig
+            } catch (e: Exception) {
+                Log.e(TAG, "Firebase remoteConfig unavailable: ${e.message}")
+                parseConfig(defaults[CONFIG_KEY] ?: "")
+                return
+            }
             val settings = remoteConfigSettings {
                 minimumFetchIntervalInSeconds = 3600
             }

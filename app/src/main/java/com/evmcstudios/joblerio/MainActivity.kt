@@ -77,11 +77,27 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        Analytics.init()
-        AdManager.initialize(this)
-        NotificationHelper.createNotificationChannel(this)
-        NotificationHelper.scheduleReEngagementCheck(this)
-        ReEngagementManager.updateLastActive(this)
+        try {
+            Analytics.init()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Analytics init failed: ${e.message}")
+        }
+        try {
+            AdManager.initialize(this)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "AdManager init failed: ${e.message}")
+        }
+        try {
+            NotificationHelper.createNotificationChannel(this)
+            NotificationHelper.scheduleReEngagementCheck(this)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Notification setup failed: ${e.message}")
+        }
+        try {
+            ReEngagementManager.updateLastActive(this)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "ReEngagement update failed: ${e.message}")
+        }
 
         lifecycleScope.launch {
             try {
@@ -108,7 +124,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        ReEngagementManager.updateLastActive(this)
+        try {
+            ReEngagementManager.updateLastActive(this)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "onResume ReEngagement update failed: ${e.message}")
+        }
     }
 }
 

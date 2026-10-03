@@ -59,7 +59,13 @@ fun LoginScreen(
     onSkip: () -> Unit
 ) {
     val context = LocalContext.current
-    val auth = remember { FirebaseAuth.getInstance() }
+    val auth = remember {
+        try {
+            FirebaseAuth.getInstance()
+        } catch (e: Exception) {
+            null
+        }
+    }
     var showEmailForm by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -67,11 +73,16 @@ fun LoginScreen(
     var googleLoading by remember { mutableStateOf(false) }
 
     val googleSignInClient = remember {
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(context.getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build()
-        GoogleSignIn.getClient(context, gso)
+        try {
+            val webClientId = context.getString(R.string.default_web_client_id)
+            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(webClientId)
+                .requestEmail()
+                .build()
+            GoogleSignIn.getClient(context, gso)
+        } catch (e: Exception) {
+            null
+        }
     }
 
     val googleSignInLauncher = rememberLauncherForActivityResult(
@@ -82,19 +93,26 @@ fun LoginScreen(
             try {
                 val account = task.getResult(ApiException::class.java)
                 val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-                auth.signInWithCredential(credential)
-                    .addOnCompleteListener { task2 ->
-                        if (task2.isSuccessful) {
-                            val userName = account.displayName ?: ""
-                            val userEmail = account.email ?: ""
-                            val avatarUrl = account.photoUrl?.toString() ?: ""
-                            UserPrefs.saveUser(context, userName, userEmail, avatarUrl)
-                            Analytics.trackLogin("google")
-                            onLoginSuccess(userName)
+                val authClient = auth
+                if (authClient != null) {
+                    authClient.signInWithCredential(credential)
+                        .addOnCompleteListener { task2 ->
+                            if (task2.isSuccessful) {
+                                val userName = account.displayName ?: ""
+                                val userEmail = account.email ?: ""
+                                val avatarUrl = account.photoUrl?.toString() ?: ""
+                                UserPrefs.saveUser(context, userName, userEmail, avatarUrl)
+                                Analytics.trackLogin("google")
+                                onLoginSuccess(userName)
+                            }
+                            googleLoading = false
                         }
-                        googleLoading = false
-                    }
+                } else {
+                    googleLoading = false
+                }
             } catch (e: ApiException) {
+                googleLoading = false
+            } catch (e: Exception) {
                 googleLoading = false
             }
         } else {
@@ -236,16 +254,25 @@ fun LoginScreen(
 
             Button(
                 onClick = {
+                    val client = googleSignInClient
+                    if (client == null) {
+                        googleLoading = false
+                        return@Button
+                    }
                     googleLoading = true
-                    val signInIntent = googleSignInClient.signInIntent
-                    googleSignInLauncher.launch(signInIntent)
+                    try {
+                        val signInIntent = client.signInIntent
+                        googleSignInLauncher.launch(signInIntent)
+                    } catch (e: Exception) {
+                        googleLoading = false
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                enabled = !googleLoading
+                enabled = !googleLoading && googleSignInClient != null
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_google),

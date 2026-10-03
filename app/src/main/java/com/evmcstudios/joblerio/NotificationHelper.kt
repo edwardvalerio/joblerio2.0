@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -23,16 +24,20 @@ object NotificationHelper {
     private const val CHANNEL_NAME = "Job Alerts"
 
     fun createNotificationChannel(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "Notifications for job alerts"
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    CHANNEL_ID,
+                    CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_DEFAULT
+                ).apply {
+                    description = "Notifications for job alerts"
+                }
+                val notificationManager = context.getSystemService(NotificationManager::class.java)
+                notificationManager?.createNotificationChannel(channel)
             }
-            val notificationManager = context.getSystemService(NotificationManager::class.java)
-            notificationManager.createNotificationChannel(channel)
+        } catch (e: Exception) {
+            Log.e("NotificationHelper", "createNotificationChannel failed: ${e.message}")
         }
     }
 
@@ -62,31 +67,43 @@ object NotificationHelper {
     }
 
     fun schedulePeriodicCheck(context: Context) {
-        val workRequest = PeriodicWorkRequestBuilder<JobAlertWorker>(
-            15, TimeUnit.MINUTES
-        ).build()
+        try {
+            val workRequest = PeriodicWorkRequestBuilder<JobAlertWorker>(
+                15, TimeUnit.MINUTES
+            ).build()
 
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            "job_alert_check",
-            ExistingPeriodicWorkPolicy.KEEP,
-            workRequest
-        )
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                "job_alert_check",
+                ExistingPeriodicWorkPolicy.KEEP,
+                workRequest
+            )
+        } catch (e: Exception) {
+            Log.e("NotificationHelper", "schedulePeriodicCheck failed: ${e.message}")
+        }
     }
 
     fun cancelPeriodicCheck(context: Context) {
-        WorkManager.getInstance(context).cancelUniqueWork("job_alert_check")
+        try {
+            WorkManager.getInstance(context).cancelUniqueWork("job_alert_check")
+        } catch (e: Exception) {
+            Log.e("NotificationHelper", "cancelPeriodicCheck failed: ${e.message}")
+        }
     }
 
     fun scheduleReEngagementCheck(context: Context) {
-        val workRequest = PeriodicWorkRequestBuilder<ReEngagementWorker>(
-            30, TimeUnit.MINUTES
-        ).build()
+        try {
+            val workRequest = PeriodicWorkRequestBuilder<ReEngagementWorker>(
+                30, TimeUnit.MINUTES
+            ).build()
 
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            "reengagement_check",
-            ExistingPeriodicWorkPolicy.KEEP,
-            workRequest
-        )
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                "reengagement_check",
+                ExistingPeriodicWorkPolicy.KEEP,
+                workRequest
+            )
+        } catch (e: Exception) {
+            Log.e("NotificationHelper", "scheduleReEngagementCheck failed: ${e.message}")
+        }
     }
 }
 
