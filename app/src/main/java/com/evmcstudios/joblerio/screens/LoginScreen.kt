@@ -62,7 +62,7 @@ fun LoginScreen(
     val auth = remember {
         try {
             FirebaseAuth.getInstance()
-        } catch (e: Exception) {
+        } catch (t: Throwable) {
             null
         }
     }
@@ -80,7 +80,7 @@ fun LoginScreen(
                 .requestEmail()
                 .build()
             GoogleSignIn.getClient(context, gso)
-        } catch (e: Exception) {
+        } catch (t: Throwable) {
             null
         }
     }
@@ -263,7 +263,7 @@ fun LoginScreen(
                     try {
                         val signInIntent = client.signInIntent
                         googleSignInLauncher.launch(signInIntent)
-                    } catch (e: Exception) {
+                    } catch (t: Throwable) {
                         googleLoading = false
                     }
                 },

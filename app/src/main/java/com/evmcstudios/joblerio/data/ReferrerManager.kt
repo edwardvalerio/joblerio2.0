@@ -89,8 +89,8 @@ object ReferrerManager {
             } else {
                 getPrefs(context).edit().putBoolean(KEY_REFERRER_CAPTURED, true).apply()
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to capture referrer: ${e.message}")
+        } catch (t: Throwable) {
+            Log.e(TAG, "Failed to capture referrer: ${t.message}", t)
         }
     }
 

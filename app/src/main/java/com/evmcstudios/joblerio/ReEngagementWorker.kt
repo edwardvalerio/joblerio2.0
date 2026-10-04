@@ -50,6 +50,7 @@ class ReEngagementWorker(
 
     private fun getReEngagementMessage(bracket: String, keyword: String): String {
         val messages = getMessagesForBracket(bracket)
+        if (messages.isEmpty()) return ""
         val message = messages[Random.nextInt(messages.size)]
         return if (keyword.isNotBlank() && Random.nextFloat() > 0.5f) {
             message.replace("{keyword}", keyword)

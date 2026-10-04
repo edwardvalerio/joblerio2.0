@@ -31,11 +31,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.evmcstudios.joblerio.R
 import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.nativead.MediaView
+import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.android.gms.ads.nativead.NativeAdView
@@ -50,12 +51,12 @@ object AdManager {
     fun initialize(context: Context) {
         if (isInitialized) return
         try {
-            com.google.android.gms.ads.MobileAds.initialize(context) { status ->
+            MobileAds.initialize(context) { status ->
                 Log.d("AdManager", "MobileAds initialized: $status")
                 isInitialized = true
             }
-        } catch (e: Exception) {
-            Log.e("AdManager", "MobileAds init failed: ${e.message}")
+        } catch (t: Throwable) {
+            Log.e("AdManager", "MobileAds init failed: ${t.message}", t)
         }
     }
 
@@ -65,28 +66,41 @@ object AdManager {
 
         val context = LocalContext.current
         val adView = remember {
-            AdView(context).apply {
-                adUnitId = BANNER_AD_UNIT_ID
-                setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, 360))
-                layoutParams = FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-                adListener = object : AdListener() {
-                    override fun onAdLoaded() {
-                        Log.d("AdManager", "Banner ad loaded")
-                    }
-                    override fun onAdFailedToLoad(error: LoadAdError) {
-                        Log.e("AdManager", "Banner ad failed: ${error.message}")
+            try {
+                AdView(context).apply {
+                    adUnitId = BANNER_AD_UNIT_ID
+                    setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, 360))
+                    layoutParams = FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                    )
+                    adListener = object : AdListener() {
+                        override fun onAdLoaded() {
+                            Log.d("AdManager", "Banner ad loaded")
+                        }
+                        override fun onAdFailedToLoad(error: LoadAdError) {
+                            Log.e("AdManager", "Banner ad failed: ${error.message}")
+                        }
                     }
                 }
+            } catch (t: Throwable) {
+                Log.e("AdManager", "Failed to create AdView: ${t.message}", t)
+                null
             }
         }
 
+        if (adView == null) return
+
         DisposableEffect(Unit) {
-            adView.loadAd(AdRequest.Builder().build())
+            try {
+                adView.loadAd(AdRequest.Builder().build())
+            } catch (t: Throwable) {
+                Log.e("AdManager", "Failed to load banner ad: ${t.message}", t)
+            }
             onDispose {
-                adView.destroy()
+                try {
+                    adView.destroy()
+                } catch (_: Throwable) {}
             }
         }
 
@@ -134,29 +148,40 @@ object AdManager {
         val nativeAdRef = remember { mutableStateOf<NativeAd?>(null) }
 
         DisposableEffect(Unit) {
-            val adLoader = com.google.android.gms.ads.AdLoader.Builder(context, NATIVE_AD_UNIT_ID)
-                .forNativeAd { ad ->
-                    nativeAdRef.value = ad
-                    isLoaded.value = true
-                    Log.d("AdManager", "Native ad loaded: ${ad.headline}")
-                }
-                .withAdListener(object : AdListener() {
-                    override fun onAdFailedToLoad(error: LoadAdError) {
-                        Log.e("AdManager", "Native ad failed: ${error.message}")
-                        isLoaded.value = false
+            val adLoader = try {
+                AdLoader.Builder(context, NATIVE_AD_UNIT_ID)
+                    .forNativeAd { ad ->
+                        nativeAdRef.value = ad
+                        isLoaded.value = true
+                        Log.d("AdManager", "Native ad loaded: ${ad.headline}")
                     }
-                })
-                .withNativeAdOptions(
-                    NativeAdOptions.Builder()
-                        .setAdChoicesPlacement(NativeAdOptions.ADCHOICES_TOP_LEFT)
-                        .build()
-                )
-                .build()
+                    .withAdListener(object : AdListener() {
+                        override fun onAdFailedToLoad(error: LoadAdError) {
+                            Log.e("AdManager", "Native ad failed: ${error.message}")
+                            isLoaded.value = false
+                        }
+                    })
+                    .withNativeAdOptions(
+                        NativeAdOptions.Builder()
+                            .setAdChoicesPlacement(NativeAdOptions.ADCHOICES_TOP_LEFT)
+                            .build()
+                    )
+                    .build()
+            } catch (t: Throwable) {
+                Log.e("AdManager", "Failed to build AdLoader: ${t.message}", t)
+                null
+            }
 
-            adLoader.loadAd(AdRequest.Builder().build())
+            try {
+                adLoader?.loadAd(AdRequest.Builder().build())
+            } catch (t: Throwable) {
+                Log.e("AdManager", "Failed to load native ad: ${t.message}", t)
+            }
 
             onDispose {
-                nativeAdRef.value?.destroy()
+                try {
+                    nativeAdRef.value?.destroy()
+                } catch (_: Throwable) {}
             }
         }
 
@@ -165,9 +190,14 @@ object AdManager {
             if (ad != null) {
                 AndroidView(
                     factory = { ctx ->
-                        val view = LayoutInflater.from(ctx).inflate(R.layout.ad_native_job, null)
-                        populateNativeAdView(view, ad)
-                        view
+                        try {
+                            val view = LayoutInflater.from(ctx).inflate(R.layout.ad_native_job, null)
+                            populateNativeAdView(view, ad)
+                            view
+                        } catch (t: Throwable) {
+                            Log.e("AdManager", "Failed to inflate native ad view: ${t.message}", t)
+                            View(ctx)
+                        }
                     },
                     modifier = modifier.fillMaxWidth()
                 )
@@ -176,7 +206,7 @@ object AdManager {
     }
 
     private fun populateNativeAdView(view: View, nativeAd: NativeAd) {
-        val nativeAdView = view as NativeAdView
+        val nativeAdView = view as? NativeAdView ?: return
 
         nativeAdView.headlineView = view.findViewById(R.id.ad_headline)
         nativeAdView.bodyView = view.findViewById(R.id.ad_body)

@@ -42,8 +42,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
-import java.net.URLDecoder
-import java.net.URLEncoder
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,46 +70,46 @@ class MainActivity : ComponentActivity() {
                     .build()
                 GoogleSignIn.getClient(this, gso).signOut()
                 FirebaseAuth.getInstance().signOut()
-            } catch (e: Exception) {
-                Log.e("MainActivity", "Sign-out failed: ${e.message}")
+            } catch (t: Throwable) {
+                Log.e("MainActivity", "Sign-out failed: ${t.message}", t)
             }
         }
 
         try {
             Analytics.init()
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Analytics init failed: ${e.message}")
+        } catch (t: Throwable) {
+            Log.e("MainActivity", "Analytics init failed: ${t.message}", t)
         }
         try {
             AdManager.initialize(this)
-        } catch (e: Exception) {
-            Log.e("MainActivity", "AdManager init failed: ${e.message}")
+        } catch (t: Throwable) {
+            Log.e("MainActivity", "AdManager init failed: ${t.message}", t)
         }
         try {
             NotificationHelper.createNotificationChannel(this)
             NotificationHelper.scheduleReEngagementCheck(this)
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Notification setup failed: ${e.message}")
+        } catch (t: Throwable) {
+            Log.e("MainActivity", "Notification setup failed: ${t.message}", t)
         }
         try {
             ReEngagementManager.updateLastActive(this)
-        } catch (e: Exception) {
-            Log.e("MainActivity", "ReEngagement update failed: ${e.message}")
+        } catch (t: Throwable) {
+            Log.e("MainActivity", "ReEngagement update failed: ${t.message}", t)
         }
 
         lifecycleScope.launch {
             try {
                 RemoteConfigManager.init()
                 Log.d("MainActivity", "Remote config initialized")
-            } catch (e: Exception) {
-                Log.e("MainActivity", "Remote config init failed: ${e.message}")
+            } catch (t: Throwable) {
+                Log.e("MainActivity", "Remote config init failed: ${t.message}", t)
             }
             try {
                 ReferrerManager.captureReferrer(this@MainActivity)
                 PostbackManager.checkAndFirePostback(this@MainActivity)
                 Log.d("MainActivity", "Referrer captured and postback checked")
-            } catch (e: Exception) {
-                Log.e("MainActivity", "Referrer/postback failed: ${e.message}")
+            } catch (t: Throwable) {
+                Log.e("MainActivity", "Referrer/postback failed: ${t.message}", t)
             }
         }
 
@@ -126,9 +124,31 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         try {
             ReEngagementManager.updateLastActive(this)
-        } catch (e: Exception) {
-            Log.e("MainActivity", "onResume ReEngagement update failed: ${e.message}")
+        } catch (t: Throwable) {
+            Log.e("MainActivity", "onResume ReEngagement update failed: ${t.message}", t)
         }
+    }
+}
+
+private fun encodeNavArgs(parts: List<String>): String {
+    val payload = parts.joinToString("\n")
+    return android.util.Base64.encodeToString(
+        payload.toByteArray(Charsets.UTF_8),
+        android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+    )
+}
+
+private fun decodeNavArgs(encoded: String): List<String> {
+    if (encoded.isBlank()) return List(7) { "" }
+    return try {
+        val decoded = String(
+            android.util.Base64.decode(encoded, android.util.Base64.URL_SAFE),
+            Charsets.UTF_8
+        )
+        val parts = decoded.split("\n")
+        List(7) { i -> parts.getOrElse(i) { "" } }
+    } catch (_: Throwable) {
+        List(7) { "" }
     }
 }
 
@@ -205,13 +225,12 @@ fun JoblerioApp() {
                 homeScreenState = homeScreenState,
                 onJobClick = { url, jobTitle, company, city, state, date, snippet ->
                     Analytics.trackJobClick(jobTitle, company)
-                    val args = listOf(url, jobTitle, company, city, state, date, snippet)
-                        .joinToString("&") { URLEncoder.encode(it, "UTF-8") }
+                    val args = encodeNavArgs(listOf(url, jobTitle, company, city, state, date, snippet))
                     navController.navigate("webview/$args")
                 },
                 onOpenLink = { url, title ->
-                    val encodedUrl = URLEncoder.encode(url, "UTF-8")
-                    val encodedTitle = URLEncoder.encode(title, "UTF-8")
+                    val encodedUrl = encodeNavArgs(listOf(url))
+                    val encodedTitle = encodeNavArgs(listOf(title))
                     navController.navigate("simple_webview/$encodedUrl/$encodedTitle")
                 },
                 onResumeEdit = { resumeId ->
@@ -236,15 +255,14 @@ fun JoblerioApp() {
         ) { backStackEntry ->
             Log.d("Navigation", "Screen: webview")
             LaunchedEffect(Unit) { Analytics.trackScreenView("Job Detail") }
-            val decoded = URLDecoder.decode(backStackEntry.arguments?.getString("args") ?: "", "UTF-8")
-            val parts = decoded.split("&")
-            val url = parts.getOrElse(0) { "" }
-            val title = parts.getOrElse(1) { "" }
-            val company = parts.getOrElse(2) { "" }
-            val city = parts.getOrElse(3) { "" }
-            val state = parts.getOrElse(4) { "" }
-            val date = parts.getOrElse(5) { "" }
-            val snippet = parts.getOrElse(6) { "" }
+            val parts = decodeNavArgs(backStackEntry.arguments?.getString("args") ?: "")
+            val url = parts[0]
+            val title = parts[1]
+            val company = parts[2]
+            val city = parts[3]
+            val state = parts[4]
+            val date = parts[5]
+            val snippet = parts[6]
 
             WebViewScreen(
                 url = url,
@@ -266,8 +284,8 @@ fun JoblerioApp() {
             )
         ) { backStackEntry ->
             Log.d("Navigation", "Screen: simple_webview")
-            val url = URLDecoder.decode(backStackEntry.arguments?.getString("url") ?: "", "UTF-8")
-            val title = URLDecoder.decode(backStackEntry.arguments?.getString("title") ?: "", "UTF-8")
+            val url = decodeNavArgs(backStackEntry.arguments?.getString("url") ?: "").firstOrNull() ?: ""
+            val title = decodeNavArgs(backStackEntry.arguments?.getString("title") ?: "").firstOrNull() ?: ""
             SimpleWebViewScreen(
                 url = url,
                 title = title,
@@ -319,8 +337,7 @@ fun JoblerioApp() {
             ViewedJobsScreen(
                 onBack = { navController.popBackStack() },
                 onJobClick = { url, title, company, city, state, date, snippet ->
-                    val args = listOf(url, title, company, city, state, date, snippet)
-                        .joinToString("&") { URLEncoder.encode(it, "UTF-8") }
+                    val args = encodeNavArgs(listOf(url, title, company, city, state, date, snippet))
                     navController.navigate("webview/$args")
                 }
             )

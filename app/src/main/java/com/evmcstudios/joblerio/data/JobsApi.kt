@@ -4,20 +4,24 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Geocoder
-import android.location.LocationManager
 import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.gson.JsonArray
+import com.google.gson.JsonParser
+import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.StringReader
 import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.net.URLEncoder
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 data class JobSearchResult(
@@ -53,7 +57,7 @@ object JobsApi {
                     }
                 }
             }
-        } catch (_: Exception) {}
+        } catch (_: Throwable) {}
         return "0.0.0.0"
     }
 
@@ -81,8 +85,8 @@ object JobsApi {
 
             if (location != null) {
                 Log.d("JobsApi", "Got location: ${location.latitude}, ${location.longitude}")
-                val geocoder = Geocoder(context, java.util.Locale.getDefault())
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                val geocoder = Geocoder(context, Locale.getDefault())
+                try {
                     val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
                     val address = addresses?.firstOrNull()
                     if (address != null) {
@@ -98,23 +102,8 @@ object JobsApi {
                         Log.d("JobsApi", "Geocoded location: $result, country: $countryCode")
                         return@withContext LocationResult(result, countryCode)
                     }
-                } else {
-                    @Suppress("DEPRECATION")
-                    val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
-                    val address = addresses?.firstOrNull()
-                    if (address != null) {
-                        val city = address.locality ?: address.subAdminArea ?: ""
-                        val state = address.adminArea ?: ""
-                        val countryCode = address.countryCode ?: ""
-                        val result = when {
-                            city.isNotBlank() && state.isNotBlank() -> "$city, $state"
-                            city.isNotBlank() -> city
-                            state.isNotBlank() -> state
-                            else -> ""
-                        }
-                        Log.d("JobsApi", "Geocoded location: $result, country: $countryCode")
-                        return@withContext LocationResult(result, countryCode)
-                    }
+                } catch (e: Exception) {
+                    Log.e("JobsApi", "Geocoder failed: ${e.message}")
                 }
             }
             Log.d("JobsApi", "No location obtained")
@@ -160,27 +149,63 @@ object JobsApi {
                 .header("X-API-Key", apiKey)
                 .build()
 
-            val response = client.newCall(request).execute()
+            val response = try {
+                client.newCall(request).execute()
+            } catch (e: Exception) {
+                return@withContext Result.failure(Exception("Network error: ${e.localizedMessage ?: "Unable to connect"}", e))
+            }
 
             if (!response.isSuccessful) {
+                response.close()
                 return@withContext Result.failure(Exception("API error: ${response.code}"))
             }
 
-            val body = response.body?.string()
-                ?: return@withContext Result.failure(Exception("Empty response"))
+            val body = try {
+                response.body?.string()
+            } catch (e: Exception) {
+                response.close()
+                return@withContext Result.failure(Exception("Failed to read response"))
+            }
+            response.close()
 
-            val jsonResponse = com.google.gson.JsonParser.parseString(body).asJsonArray
+            if (body.isNullOrBlank()) {
+                return@withContext Result.failure(Exception("Empty response"))
+            }
+
+            val jsonResponse = try {
+                JsonParser.parseString(body).asJsonArray
+            } catch (e: Exception) {
+                try {
+                    val obj = JsonParser.parseString(body).asJsonObject
+                    val respObj = obj.getAsJsonObject("response")
+                    if (respObj != null) {
+                        val totalResults = respObj.get("totalresults")?.asString ?: "0"
+                        val resultsArray = respObj.getAsJsonArray("results") ?: JsonArray()
+                        val jobAdapter = JobAdapter()
+                        val jobs = resultsArray.mapNotNull { element ->
+                            try {
+                                jobAdapter.read(JsonReader(StringReader(element.toString())))
+                            } catch (_: Exception) {
+                                null
+                            }
+                        }
+                        return@withContext Result.success(JobSearchResult(jobs, totalResults.toIntOrNull() ?: 0))
+                    }
+                } catch (_: Exception) {}
+                return@withContext Result.failure(Exception("Invalid API response format"))
+            }
+
             val responseObj = jsonResponse.firstOrNull()?.asJsonObject?.getAsJsonObject("response")
                 ?: return@withContext Result.failure(Exception("No results"))
 
             val totalResults = responseObj.get("totalresults")?.asString ?: "0"
-            val resultsArray = responseObj.getAsJsonArray("results") ?: com.google.gson.JsonArray()
+            val resultsArray = responseObj.getAsJsonArray("results") ?: JsonArray()
 
             val jobAdapter = JobAdapter()
             val jobs = resultsArray.mapNotNull { element ->
                 try {
-                    jobAdapter.read(com.google.gson.stream.JsonReader(java.io.StringReader(element.toString())))
-                } catch (e: Exception) {
+                    jobAdapter.read(JsonReader(StringReader(element.toString())))
+                } catch (_: Exception) {
                     null
                 }
             }

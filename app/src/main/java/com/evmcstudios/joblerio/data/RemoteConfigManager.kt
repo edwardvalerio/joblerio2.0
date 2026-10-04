@@ -47,8 +47,8 @@ object RemoteConfigManager {
         try {
             val rc = try {
                 Firebase.remoteConfig
-            } catch (e: Exception) {
-                Log.e(TAG, "Firebase remoteConfig unavailable: ${e.message}")
+            } catch (t: Throwable) {
+                Log.e(TAG, "Firebase remoteConfig unavailable: ${t.message}", t)
                 parseConfig(defaults[CONFIG_KEY] ?: "")
                 return
             }
@@ -60,18 +60,22 @@ object RemoteConfigManager {
             rc.fetchAndActivate().await()
             parseConfig(rc.getString(CONFIG_KEY))
             Log.d(TAG, "Remote config loaded: $config")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to load remote config: ${e.message}")
+        } catch (t: Throwable) {
+            Log.e(TAG, "Failed to load remote config: ${t.message}", t)
             parseConfig(defaults[CONFIG_KEY] ?: "")
         }
     }
 
     private fun parseConfig(raw: String) {
         config = try {
-            gson.fromJson(raw, JsonObject::class.java)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse config: ${e.message}")
-            gson.fromJson(defaults[CONFIG_KEY], JsonObject::class.java)
+            gson.fromJson(raw, JsonObject::class.java) ?: gson.fromJson(defaults[CONFIG_KEY], JsonObject::class.java)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Failed to parse config: ${t.message}", t)
+            try {
+                gson.fromJson(defaults[CONFIG_KEY], JsonObject::class.java)
+            } catch (_: Throwable) {
+                null
+            }
         }
     }
 

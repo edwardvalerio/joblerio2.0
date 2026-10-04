@@ -72,34 +72,38 @@ object PostbackManager {
     private suspend fun firePostback(context: Context, clickId: String) {
         if (isPostbackFired(context)) return
 
-        val baseUrl = RemoteConfigManager.getPostbackUrl()
-        val key = RemoteConfigManager.getPostbackKey()
-        val payout = RemoteConfigManager.getPayout()
+        try {
+            val baseUrl = RemoteConfigManager.getPostbackUrl()
+            val key = RemoteConfigManager.getPostbackKey()
+            val payout = RemoteConfigManager.getPayout()
 
-        val url = "$baseUrl?clickid=${URLEncoder.encode(clickId, "UTF-8")}" +
-            "&payout=${URLEncoder.encode(payout, "UTF-8")}" +
-            "&key=${URLEncoder.encode(key, "UTF-8")}"
+            val url = "$baseUrl?clickid=${URLEncoder.encode(clickId, "UTF-8")}" +
+                "&payout=${URLEncoder.encode(payout, "UTF-8")}" +
+                "&key=${URLEncoder.encode(key, "UTF-8")}"
 
-        Log.d(TAG, "Firing postback: $url")
+            Log.d(TAG, "Firing postback: $url")
 
-        withContext(Dispatchers.IO) {
-            try {
-                val request = Request.Builder()
-                    .url(url)
-                    .header("User-Agent", "Joblerio/1.0")
-                    .get()
-                    .build()
-                val response = client.newCall(request).execute()
-                val code = response.code
-                Log.d(TAG, "Postback response: $code")
+            withContext(Dispatchers.IO) {
+                try {
+                    val request = Request.Builder()
+                        .url(url)
+                        .header("User-Agent", "Joblerio/1.0")
+                        .get()
+                        .build()
+                    val response = client.newCall(request).execute()
+                    val code = response.code
+                    Log.d(TAG, "Postback response: $code")
 
-                if (code in 200..299) {
-                    getPrefs(context).edit().putBoolean(KEY_POSTBACK_FIRED, true).apply()
-                    Log.d(TAG, "Postback fired successfully")
+                    if (code in 200..299) {
+                        getPrefs(context).edit().putBoolean(KEY_POSTBACK_FIRED, true).apply()
+                        Log.d(TAG, "Postback fired successfully")
+                    }
+                } catch (t: Throwable) {
+                    Log.e(TAG, "Postback failed: ${t.message}", t)
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "Postback failed: ${e.message}")
             }
+        } catch (t: Throwable) {
+            Log.e(TAG, "Postback setup failed: ${t.message}", t)
         }
     }
 
