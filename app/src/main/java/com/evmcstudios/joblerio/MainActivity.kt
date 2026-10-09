@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
             Log.e("MainActivity", "Analytics init failed: ${t.message}", t)
         }
         try {
-            AdManager.initialize(this)
+            AdManager.initializeWithConsent(this)
         } catch (t: Throwable) {
             Log.e("MainActivity", "AdManager init failed: ${t.message}", t)
         }

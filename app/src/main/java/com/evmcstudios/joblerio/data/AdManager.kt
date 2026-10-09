@@ -1,5 +1,6 @@
 package com.evmcstudios.joblerio.data
 
+import android.app.Activity
 import android.content.Context
 import android.util.Log
 import android.view.LayoutInflater
@@ -18,8 +19,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,29 +43,87 @@ import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.android.gms.ads.nativead.NativeAdView
+import com.google.android.ump.ConsentRequestParameters
+import com.google.android.ump.UserMessagingPlatform
 
 object AdManager {
 
     private const val BANNER_AD_UNIT_ID = "ca-app-pub-9284077315374106/9814108892"
     private const val NATIVE_AD_UNIT_ID = "ca-app-pub-9284077315374106/2049325633"
+    private const val TAG = "AdManager"
 
     private var isInitialized = false
+
+    /** False until UMP consent is resolved; blocks ad requests for EEA compliance. */
+    var consentReady by mutableStateOf(false)
+        private set
 
     fun initialize(context: Context) {
         if (isInitialized) return
         try {
             MobileAds.initialize(context) { status ->
-                Log.d("AdManager", "MobileAds initialized: $status")
+                Log.d(TAG, "MobileAds initialized: $status")
                 isInitialized = true
             }
         } catch (t: Throwable) {
-            Log.e("AdManager", "MobileAds init failed: ${t.message}", t)
+            Log.e(TAG, "MobileAds init failed: ${t.message}", t)
+        }
+    }
+
+    /**
+     * Request UMP consent (EEA/UK/CH), show the Google consent form if required,
+     * then initialize AdMob. Ads do not load until [consentReady] is true.
+     */
+    fun initializeWithConsent(activity: Activity) {
+        if (isInitialized || consentReady) {
+            if (!consentReady) initialize(activity)
+            return
+        }
+
+        val finish = {
+            consentReady = true
+            initialize(activity)
+        }
+
+        try {
+            val consentInformation = UserMessagingPlatform.getConsentInformation(activity)
+            val params = ConsentRequestParameters.Builder()
+                .setTagForUnderAgeOfConsent(false)
+                .build()
+
+            consentInformation.requestConsentInfoUpdate(
+                activity,
+                params,
+                {
+                    try {
+                        UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { formError ->
+                            if (formError != null) {
+                                Log.e(TAG, "Consent form failed: ${formError.message}")
+                            } else {
+                                Log.d(TAG, "Consent form completed or not required")
+                            }
+                            finish()
+                        }
+                    } catch (t: Throwable) {
+                        Log.e(TAG, "Consent form error: ${t.message}", t)
+                        finish()
+                    }
+                },
+                { requestError ->
+                    Log.e(TAG, "Consent info update failed: ${requestError.message}")
+                    finish()
+                }
+            )
+        } catch (t: Throwable) {
+            Log.e(TAG, "UMP init failed: ${t.message}", t)
+            finish()
         }
     }
 
     @Composable
     fun BannerAd(modifier: Modifier = Modifier) {
         if (LocalInspectionMode.current) return
+        if (!consentReady) return
 
         val context = LocalContext.current
         val adView = remember {
@@ -76,15 +137,15 @@ object AdManager {
                     )
                     adListener = object : AdListener() {
                         override fun onAdLoaded() {
-                            Log.d("AdManager", "Banner ad loaded")
+                            Log.d(TAG, "Banner ad loaded")
                         }
                         override fun onAdFailedToLoad(error: LoadAdError) {
-                            Log.e("AdManager", "Banner ad failed: ${error.message}")
+                            Log.e(TAG, "Banner ad failed: ${error.message}")
                         }
                     }
                 }
             } catch (t: Throwable) {
-                Log.e("AdManager", "Failed to create AdView: ${t.message}", t)
+                Log.e(TAG, "Failed to create AdView: ${t.message}", t)
                 null
             }
         }
@@ -95,7 +156,7 @@ object AdManager {
             try {
                 adView.loadAd(AdRequest.Builder().build())
             } catch (t: Throwable) {
-                Log.e("AdManager", "Failed to load banner ad: ${t.message}", t)
+                Log.e(TAG, "Failed to load banner ad: ${t.message}", t)
             }
             onDispose {
                 try {
@@ -142,6 +203,7 @@ object AdManager {
     @Composable
     fun NativeAdCard(modifier: Modifier = Modifier) {
         if (LocalInspectionMode.current) return
+        if (!consentReady) return
 
         val context = LocalContext.current
         val isLoaded = remember { mutableStateOf(false) }
@@ -153,11 +215,11 @@ object AdManager {
                     .forNativeAd { ad ->
                         nativeAdRef.value = ad
                         isLoaded.value = true
-                        Log.d("AdManager", "Native ad loaded: ${ad.headline}")
+                        Log.d(TAG, "Native ad loaded: ${ad.headline}")
                     }
                     .withAdListener(object : AdListener() {
                         override fun onAdFailedToLoad(error: LoadAdError) {
-                            Log.e("AdManager", "Native ad failed: ${error.message}")
+                            Log.e(TAG, "Native ad failed: ${error.message}")
                             isLoaded.value = false
                         }
                     })
@@ -168,14 +230,14 @@ object AdManager {
                     )
                     .build()
             } catch (t: Throwable) {
-                Log.e("AdManager", "Failed to build AdLoader: ${t.message}", t)
+                Log.e(TAG, "Failed to build AdLoader: ${t.message}", t)
                 null
             }
 
             try {
                 adLoader?.loadAd(AdRequest.Builder().build())
             } catch (t: Throwable) {
-                Log.e("AdManager", "Failed to load native ad: ${t.message}", t)
+                Log.e(TAG, "Failed to load native ad: ${t.message}", t)
             }
 
             onDispose {
@@ -195,7 +257,7 @@ object AdManager {
                             populateNativeAdView(view, ad)
                             view
                         } catch (t: Throwable) {
-                            Log.e("AdManager", "Failed to inflate native ad view: ${t.message}", t)
+                            Log.e(TAG, "Failed to inflate native ad view: ${t.message}", t)
                             View(ctx)
                         }
                     },

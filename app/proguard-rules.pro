@@ -80,6 +80,10 @@
 -keep class com.android.installreferrer.api.** { *; }
 -dontwarn com.android.installreferrer.**
 
+# --- UMP (User Messaging Platform / consent) ---
+-keep class com.google.android.ump.** { *; }
+-dontwarn com.google.android.ump.**
+
 # --- AdMob ---
 -keep class com.google.ads.** { *; }
 -keep class com.google.android.gms.ads.** { *; }

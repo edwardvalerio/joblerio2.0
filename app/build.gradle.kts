@@ -107,6 +107,7 @@ dependencies {
     implementation(libs.firebase.config)
     implementation(libs.work.runtime)
     implementation(libs.play.services.ads)
+    implementation(libs.user.messaging.platform)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
